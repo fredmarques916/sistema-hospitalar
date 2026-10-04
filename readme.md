@@ -1,4 +1,4 @@
-possivel estrutura do projeto
+possivel estrutura do projeto (acesse o readme.md pelo vscode para visualização)
 
 sistema-hospitalar/
 │
