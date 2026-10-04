@@ -1,0 +1,59 @@
+.formulario {
+  background-color: white;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.formulario h2 {
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+.gridFormulario {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.gridFormulario div {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-bottom: 7px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+input,
+select,
+textarea {
+  padding: 11px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #2d91c2;
+}
+
+.campoObservacao {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+}
+
+.botaoPrincipal {
+  margin-top: 22px;
+  border: none;
+  border-radius: 7px;
+  background-color: #247aa5;
+  color: white;
+  padding: 11px 20px;
+  font-weight: bold;
+}

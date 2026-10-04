@@ -1,0 +1,43 @@
+.listaQuartos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.quarto {
+  background-color: white;
+  padding: 22px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.quarto h2 {
+  color: #173b57;
+  margin-bottom: 12px;
+}
+
+.quarto p {
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.quarto span {
+  display: inline-block;
+  margin-top: 10px;
+
+  padding: 6px 12px;
+  border-radius: 20px;
+
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.disponivel span {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.ocupado span {
+  background-color: #fee2e2;
+  color: #991b1b;
+}

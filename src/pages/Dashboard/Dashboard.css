@@ -1,0 +1,51 @@
+
+
+.tituloPagina {
+  margin-bottom: 25px;
+}
+
+.tituloPagina h1 {
+  color: #173b57;
+  font-size: 27px;
+}
+
+.tituloPagina p {
+  color: #6b7280;
+  margin-top: 5px;
+}
+
+.cardsDashboard {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.painel {
+  background-color: white;
+  margin-top: 25px;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.painel h2 {
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+  color: #6b7280;
+  font-size: 13px;
+}
