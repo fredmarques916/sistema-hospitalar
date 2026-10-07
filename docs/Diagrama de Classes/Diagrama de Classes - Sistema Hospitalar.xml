@@ -1,0 +1,60 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0">
+  <diagram id="CRC_Hospital_Diagram" name="Diagrama de Classes - Hospital">
+    <mxGraphModel dx="2943" dy="1606" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Paciente" parent="1" style="html=1;whiteSpace=wrap;align=left;verticalAlign=top;" value="&lt;b&gt;Paciente&lt;/b&gt;&lt;hr style=&quot;margin:0px;&quot;&gt;&lt;div style=&quot;padding:4px;&quot;&gt;- nome: String&lt;br&gt;- cpf: String&lt;br&gt;- dataNascimento: Date&lt;br&gt;- telefone: String&lt;br&gt;- endereco: String&lt;br&gt;- email: String&lt;/div&gt;&lt;hr style=&quot;margin:0px;&quot;&gt;&lt;div style=&quot;padding:4px;&quot;&gt;+ manterDadosCadastrais()&lt;br&gt;+ consultarAtendimentos()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="170" width="160" x="370" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="HistoricoMedico" parent="1" style="html=1;whiteSpace=wrap;align=left;verticalAlign=top;" value="&lt;b&gt;Histórico Médico&lt;/b&gt;&lt;hr style=&quot;margin:0px;&quot;&gt;&lt;div style=&quot;padding:4px;&quot;&gt;- informacoesRelevantes: String&lt;/div&gt;&lt;hr style=&quot;margin:0px;&quot;&gt;&lt;div style=&quot;padding:4px;&quot;&gt;+ registrarAtendimento()&lt;br&gt;+ organizarHistorico()&lt;br&gt;+ consultarHistorico()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="120" width="180" x="370" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="Consulta" parent="1" style="html=1;whiteSpace=wrap;align=left;verticalAlign=top;" value="&lt;b&gt;Consulta&lt;/b&gt;&lt;hr style=&quot;margin:0px;&quot;&gt;&lt;div style=&quot;padding:4px;&quot;&gt;- dataConsulta: Date&lt;br&gt;- horario: Time&lt;br&gt;- motivo: String&lt;br&gt;- observacoesMedicas: String&lt;/div&gt;&lt;hr style=&quot;margin:0px;&quot;&gt;&lt;div style=&quot;padding:4px;&quot;&gt;+ associarPaciente()&lt;br&gt;+ associarProfissional()&lt;br&gt;+ agendar()&lt;br&gt;+ verificarDisponibilidade()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="170" width="170" x="110" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="Internacao" parent="1" style="html=1;whiteSpace=wrap;align=left;verticalAlign=top;" value="&lt;b&gt;Internação&lt;/b&gt;&lt;hr style=&quot;margin:0px;&quot;&gt;&lt;div style=&quot;padding:4px;&quot;&gt;- dataEntrada: Date&lt;br&gt;- dataPrevistaAlta: Date&lt;br&gt;- dataEfetivaAlta: Date&lt;br&gt;- observacoes: String&lt;/div&gt;&lt;hr style=&quot;margin:0px;&quot;&gt;&lt;div style=&quot;padding:4px;&quot;&gt;+ associarPaciente()&lt;br&gt;+ associarProfissional()&lt;br&gt;+ associarQuarto()&lt;br&gt;+ registrarAlta()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="160" width="140" x="610" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="ProfissionalSaude" parent="1" style="html=1;whiteSpace=wrap;align=left;verticalAlign=top;" value="&lt;b&gt;Profissional da Saúde&lt;/b&gt;&lt;hr style=&quot;margin:0px;&quot;&gt;&lt;div style=&quot;padding:4px;&quot;&gt;- nome: String&lt;br&gt;- registroProfissional: String&lt;br&gt;- especialidade: String&lt;br&gt;- telefone: String&lt;br&gt;- email: String&lt;br&gt;- disponibilidade: Boolean&lt;/div&gt;&lt;hr style=&quot;margin:0px;&quot;&gt;&lt;div style=&quot;padding:4px;&quot;&gt;+ verificarDisponibilidade()&lt;br&gt;+ obterConsultas()&lt;br&gt;+ obterInternacoes()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="180" width="160" x="370" y="1130" as="geometry" />
+        </mxCell>
+        <mxCell id="Quarto" parent="1" style="html=1;whiteSpace=wrap;align=left;verticalAlign=top;" value="&lt;b&gt;Quarto&lt;/b&gt;&lt;hr style=&quot;margin:0px;&quot;&gt;&lt;div style=&quot;padding:4px;&quot;&gt;- numeroIdentificacao: Integer&lt;br&gt;- andar: Integer&lt;br&gt;- capacidadeMaxima: Integer&lt;br&gt;- situacaoAtual: String&lt;br&gt;- quantidadeOcupantes: Integer&lt;/div&gt;&lt;hr style=&quot;margin:0px;&quot;&gt;&lt;div style=&quot;padding:4px;&quot;&gt;+ verificarDisponibilidade()&lt;br&gt;+ atualizarSituacao()&lt;br&gt;+ controlarCapacidade()&lt;/div&gt;" vertex="1">
+          <mxGeometry height="170" width="180" x="900" y="1130" as="geometry" />
+        </mxCell>
+        <mxCell id="Edge_Pac_Hist" edge="1" parent="1" source="Paciente" style="endArrow=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" target="HistoricoMedico">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Edge_Pac_Cons" edge="1" parent="1" source="Paciente" style="endArrow=none;html=1;entryX=0.25;entryY=0;entryDx=0;entryDy=0;exitX=0;exitY=0.25;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" target="Consulta">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Edge_Hist_Cons" edge="1" parent="1" source="HistoricoMedico" style="endArrow=none;html=1;entryX=0.75;entryY=0;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" target="Consulta">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="282" y="765" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Edge_Pac_Int" edge="1" parent="1" source="Paciente" style="endArrow=none;html=1;entryX=0.75;entryY=0;entryDx=0;entryDy=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" target="Internacao">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Edge_Hist_Int" edge="1" parent="1" source="HistoricoMedico" style="endArrow=none;html=1;entryX=0.25;entryY=0;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" target="Internacao">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="668" y="765" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Edge_Prof_Cons" edge="1" parent="1" source="ProfissionalSaude" style="endArrow=none;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" target="Consulta">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Edge_Prof_Int" edge="1" parent="1" source="ProfissionalSaude" style="endArrow=none;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" target="Internacao">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Edge_Quarto_Int" edge="1" parent="1" source="Quarto" style="endArrow=none;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" target="Internacao">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
