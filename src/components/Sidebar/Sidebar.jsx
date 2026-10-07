@@ -15,13 +15,13 @@ function Sidebar() {
       </div>
 
       <nav>
-        <NavLink to="/">Dashboard</NavLink>
-        <NavLink to="/pacientes">Pacientes</NavLink>
-        <NavLink to="/profissionais">Profissionais</NavLink>
-        <NavLink to="/consultas">Consultas</NavLink>
-        <NavLink to="/internacoes">Internações</NavLink>
-        <NavLink to="/quartos">Quartos</NavLink>
-        <NavLink to="/historico">Histórico Médico</NavLink>
+        <NavLink to="/dashboard" end>Dashboard</NavLink>
+        <NavLink to="/dashboard/pacientes">Pacientes</NavLink>
+        <NavLink to="/dashboard/profissionais">Profissionais</NavLink>
+        <NavLink to="/dashboard/consultas">Consultas</NavLink>
+        <NavLink to="/dashboard/internacoes">Internações</NavLink>
+        <NavLink to="/dashboard/quartos">Quartos</NavLink>
+        <NavLink to="/dashboard/historico">Histórico Médico</NavLink>
       </nav>
 
     </aside>
