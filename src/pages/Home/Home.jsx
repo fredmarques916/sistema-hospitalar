@@ -1,190 +1,117 @@
 import { Link } from "react-router-dom";
 import "./Home.css";
 
+const modules = [
+  {
+    title: "Pacientes",
+    description: "Cadastros e informações organizados em um só lugar.",
+  },
+  {
+    title: "Consultas",
+    description: "Acompanhe os atendimentos e a agenda da equipe.",
+  },
+  {
+    title: "Internações",
+    description: "Consulte internações e disponibilidade de quartos.",
+  },
+  {
+    title: "Profissionais",
+    description: "Mantenha os dados da equipe médica atualizados.",
+  },
+];
+
 function Home() {
   return (
     <div className="home-container">
-      {/* HEADER */}
       <header className="home-header">
-        <div className="home-logo">
-          <div className="home-logoIcone">+</div>
-          <div>
-            <h2>Hospital</h2>
+        <Link to="/" className="home-logo" aria-label="Hospital — página inicial">
+          <span className="home-logoIcone" aria-hidden="true">+</span>
+          <span className="home-logoText">
+            <strong>Hospital</strong>
             <span>Sistema de Gestão</span>
-          </div>
-        </div>
-        <nav className="home-nav">
+          </span>
+        </Link>
+
+        <nav className="home-nav" aria-label="Navegação principal">
           <a href="#recursos" className="nav-link">Recursos</a>
-          <a href="#beneficios" className="nav-link">Benefícios</a>
-          <div className="divider"></div>
           <Link to="/login" className="btn-outline">Entrar</Link>
-          <Link to="/cadastro" className="btn-primary">Cadastrar</Link>
+          <Link to="/cadastro" className="btn-primary">Criar conta</Link>
         </nav>
       </header>
 
       <main className="home-main">
-        {/* HERO SECTION */}
         <section className="hero-section">
           <div className="hero-content">
-            <div className="badge">✨ O futuro da gestão em saúde</div>
-            <h1>Gestão Hospitalar <span className="highlight">Simplificada</span> e Inteligente</h1>
-            <p>
-              O sistema definitivo para modernizar o seu hospital. Tenha controle total sobre pacientes, prontuários, equipe médica, internações e financeiro em uma única plataforma intuitiva.
+            <p className="hero-eyebrow">Gestão hospitalar</p>
+            <h1>Mais clareza para cuidar da rotina do hospital.</h1>
+            <p className="hero-description">
+              Reúna pacientes, consultas, internações e equipe em um sistema
+              simples de acompanhar e usar no dia a dia.
             </p>
             <div className="hero-actions">
-              <Link to="/cadastro" className="btn-primary hero-btn">Começar Gratuitamente</Link>
-              <Link to="/login" className="btn-secondary hero-btn">Acessar Sistema</Link>
-            </div>
-            <div className="hero-stats-mini">
-              <span>✅ +500 Hospitais</span>
-              <span>✅ Dados Seguros</span>
-              <span>✅ Suporte 24/7</span>
+              <Link to="/login" className="btn-primary hero-btn">
+                Acessar sistema
+              </Link>
+              <a href="#recursos" className="btn-secondary hero-btn">
+                Conhecer recursos
+              </a>
             </div>
           </div>
-          
-          {/* Dashboard Preview/Abstract Illustration */}
-          <div className="hero-image-wrapper">
-            <div className="abstract-dashboard">
-              <div className="dash-header"></div>
-              <div className="dash-body">
-                <div className="dash-sidebar"></div>
-                <div className="dash-content">
-                  <div className="dash-cards">
-                    <div className="d-card"></div>
-                    <div className="d-card"></div>
-                    <div className="d-card"></div>
-                  </div>
-                  <div className="dash-table">
-                    <div className="t-row"></div>
-                    <div className="t-row"></div>
-                    <div className="t-row"></div>
-                  </div>
-                </div>
+
+          <aside className="hero-summary" aria-label="Áreas do sistema">
+            <div className="summary-heading">
+              <span className="summary-indicator" aria-hidden="true" />
+              <div>
+                <p>Visão geral</p>
+                <h2>Áreas do sistema</h2>
               </div>
             </div>
-          </div>
+            <ul className="summary-list">
+              <li><span>Pacientes</span><span>Cadastros</span></li>
+              <li><span>Consultas</span><span>Agendamentos</span></li>
+              <li><span>Internações</span><span>Leitos e quartos</span></li>
+              <li><span>Equipe médica</span><span>Profissionais</span></li>
+            </ul>
+            <p className="summary-note">
+              Informações essenciais reunidas em um único ambiente.
+            </p>
+          </aside>
         </section>
 
-        {/* ESTATÍSTICAS */}
-        <section className="stats-section">
-          <div className="stat-item">
-            <h2>10k+</h2>
-            <p>Pacientes Gerenciados</p>
-          </div>
-          <div className="stat-item">
-            <h2>99.9%</h2>
-            <p>Uptime do Servidor</p>
-          </div>
-          <div className="stat-item">
-            <h2>50+</h2>
-            <p>Especialidades Atendidas</p>
-          </div>
-          <div className="stat-item">
-            <h2>24h</h2>
-            <p>Monitoramento Contínuo</p>
-          </div>
-        </section>
-
-        {/* RECURSOS */}
         <section id="recursos" className="features-section">
           <div className="section-title">
-            <h2>Tudo o que seu hospital precisa</h2>
-            <p>Desenvolvido para atender a todas as demandas de clínicas e grandes hospitais.</p>
+            <p className="section-eyebrow">Recursos</p>
+            <h2>O essencial para a gestão diária</h2>
+            <p>
+              Acesse as principais áreas da operação sem complicar a rotina da
+              equipe.
+            </p>
           </div>
-          
+
           <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon">👤</div>
-              <h3>Gestão de Pacientes</h3>
-              <p>Histórico médico detalhado, prontuário eletrônico e cadastro unificado em um só lugar.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">📅</div>
-              <h3>Agendamentos</h3>
-              <p>Controle de consultas inteligente, reduzindo filas de espera e otimizando a agenda médica.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🏥</div>
-              <h3>Internações & Quartos</h3>
-              <p>Acompanhe a disponibilidade de leitos e o status das internações em tempo real.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🩺</div>
-              <h3>Equipe Médica</h3>
-              <p>Gerencie escalas, especialidades e o desempenho de todos os profissionais de saúde.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">📊</div>
-              <h3>Painéis Dinâmicos</h3>
-              <p>Dashboards atualizados em tempo real com os principais indicadores de desempenho.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🔒</div>
-              <h3>Segurança Máxima</h3>
-              <p>Seus dados são criptografados de ponta a ponta, seguindo as diretrizes da LGPD.</p>
-            </div>
+            {modules.map((module) => (
+              <article className="feature-card" key={module.title}>
+                <h3>{module.title}</h3>
+                <p>{module.description}</p>
+              </article>
+            ))}
           </div>
         </section>
 
-        {/* BENEFÍCIOS */}
-        <section id="beneficios" className="benefits-section">
-          <div className="benefits-content">
-            <h2>Por que escolher o nosso sistema?</h2>
-            <ul className="benefits-list">
-              <li>
-                <span className="b-icon">🚀</span>
-                <div>
-                  <strong>Implantação Rápida</strong>
-                  <p>Sistema na nuvem, sem necessidade de servidores físicos complexos.</p>
-                </div>
-              </li>
-              <li>
-                <span className="b-icon">📱</span>
-                <div>
-                  <strong>Acesso em qualquer lugar</strong>
-                  <p>Acesse o painel do seu computador, tablet ou celular com interface responsiva.</p>
-                </div>
-              </li>
-              <li>
-                <span className="b-icon">💬</span>
-                <div>
-                  <strong>Suporte Especializado</strong>
-                  <p>Nossa equipe está pronta para ajudar a qualquer momento do dia ou da noite.</p>
-                </div>
-              </li>
-            </ul>
-          </div>
-          <div className="benefits-image">
-            <div className="circle-bg"></div>
-            <div className="floating-card c1">Prontuários 100% Digitais</div>
-            <div className="floating-card c2">Redução de Custos</div>
-          </div>
-        </section>
-
-        {/* CTA FINAL */}
         <section className="cta-section">
-          <h2>Pronto para revolucionar seu hospital?</h2>
-          <p>Junte-se a centenas de instituições que já modernizaram suas rotinas.</p>
-          <Link to="/cadastro" className="btn-primary btn-large">Criar Conta Agora</Link>
+          <div>
+            <p className="section-eyebrow">Sistema de Gestão Hospitalar</p>
+            <h2>Comece pela rotina da sua equipe.</h2>
+          </div>
+          <Link to="/login" className="btn-primary">
+            Entrar no sistema
+          </Link>
         </section>
       </main>
 
-      {/* FOOTER */}
       <footer className="home-footer">
-        <div className="footer-content">
-          <div className="footer-logo">
-            <div className="home-logoIcone small-icon">+</div>
-            <span>Hospital Manager</span>
-          </div>
-          <div className="footer-links">
-            <span>© 2026 Sistema Hospitalar. Todos os direitos reservados.</span>
-            <div className="links-right">
-              <a href="#">Termos de Uso</a>
-              <a href="#">Privacidade</a>
-              <a href="#">Suporte</a>
-            </div>
-          </div>
-        </div>
+        <span>Hospital · Sistema de Gestão</span>
+        <span>Gestão clara para o cuidado diário.</span>
       </footer>
     </div>
   );

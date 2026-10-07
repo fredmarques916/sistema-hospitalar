@@ -14,20 +14,34 @@ function Login() {
     <div className="auth-container">
       <div className="auth-box formulario">
         <div className="auth-header">
-          <div className="auth-logoIcone">+</div>
+          <div className="auth-logoIcone" aria-hidden="true">+</div>
           <h2>Hospital</h2>
-          <p>Faça login para continuar</p>
+          <p>Acesse o sistema de gestão hospitalar.</p>
         </div>
 
         <form onSubmit={handleLogin} className="auth-form">
           <div className="campo-unico">
-            <label>E-mail</label>
-            <input type="email" placeholder="email@exemplo.com" required />
+            <label htmlFor="login-email">E-mail</label>
+            <input
+              id="login-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder="email@exemplo.com"
+              required
+            />
           </div>
 
           <div className="campo-unico">
-            <label>Senha</label>
-            <input type="password" placeholder="Sua senha" required />
+            <label htmlFor="login-password">Senha</label>
+            <input
+              id="login-password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Digite sua senha"
+              required
+            />
           </div>
 
           <button type="submit" className="botaoPrincipal auth-btn">
@@ -36,7 +50,7 @@ function Login() {
         </form>
 
         <p className="auth-footer">
-          Não possui uma conta? <Link to="/cadastro">Cadastre-se</Link>
+          Ainda não possui uma conta? <Link to="/cadastro">Criar conta</Link>
         </p>
       </div>
     </div>
