@@ -2,7 +2,9 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
+  background:
+    radial-gradient(ellipse at 84% 14%, rgba(2, 132, 199, 0.08), transparent 34rem),
+    #f5f7fa;
   color: #1f2937;
 }
 
@@ -188,6 +190,7 @@
   border: 1px solid #e1e7ec;
   border-radius: 9px;
   background: #fff;
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(15, 23, 42, 0.05));
 }
 
 .summary-heading {
@@ -279,6 +282,13 @@
   border: 1px solid #e1e7ec;
   border-radius: 7px;
   background: #fff;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-3px);
+  border-color: #b7d9e8;
+  box-shadow: var(--shadow-md, 0 8px 18px rgba(15, 23, 42, 0.08));
 }
 
 .feature-card h3 {
