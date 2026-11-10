@@ -62,6 +62,10 @@ public class DataInitializer {
 
             // 2. Profissionais da Saúde (Clínico Geral, Especialista, Cirurgião)
             ProfissionalSaude clinico = profissionalRepo.save(new ProfissionalSaude(
+                    "Dr. Carlos Eduardo", "CRM/MG 48102", "(31) 3344-5500", "medico@hospital.com",
+                    CategoriaProfissional.CLINICO_GERAL, null, null));
+
+            ProfissionalSaude clinicoCamila = profissionalRepo.save(new ProfissionalSaude(
                     "Dra. Camila Nogueira", "CRM/MG 45890", "(31) 3344-5566", "camila.nogueira@hospital.com",
                     CategoriaProfissional.CLINICO_GERAL, null, null));
 
