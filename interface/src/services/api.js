@@ -32,6 +32,8 @@ async function request(endpoint, options = {}) {
           .map(([campo, msg]) => `${campo}: ${msg}`)
           .join(" | ");
         mensagem += ` (${detalhes})`;
+      } else if (data?.detalhe && data.detalhe !== data.detail) {
+        mensagem += ` (${data.detalhe})`;
       }
 
       const error = new Error(mensagem);

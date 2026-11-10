@@ -2,11 +2,14 @@ package com.api.controller;
 
 import com.api.domain.exception.BusinessRuleException;
 import com.api.domain.exception.ResourceNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.net.URI;
 import java.time.Instant;
@@ -15,6 +18,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(BusinessRuleException.class)
     public ProblemDetail handleBusinessRuleException(BusinessRuleException ex) {
@@ -30,6 +35,15 @@ public class GlobalExceptionHandler {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
         problemDetail.setTitle("Recurso Não Encontrado");
         problemDetail.setType(URI.create("https://hospital.local/erros/nao-encontrado"));
+        problemDetail.setProperty("timestamp", Instant.now());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ProblemDetail handleNoResourceFoundException(NoResourceFoundException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Recurso não encontrado: " + ex.getResourcePath());
+        problemDetail.setTitle("Endpoint Não Encontrado");
+        problemDetail.setType(URI.create("https://hospital.local/erros/endpoint-nao-encontrado"));
         problemDetail.setProperty("timestamp", Instant.now());
         return problemDetail;
     }
@@ -51,11 +65,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGenericException(Exception ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "Ocorreu um erro interno inesperado.");
+        log.error("Erro interno não tratado: ", ex);
+        String mensagem = ex.getMessage() != null && !ex.getMessage().isBlank()
+                ? ex.getMessage()
+                : "Ocorreu um erro interno inesperado.";
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, mensagem);
         problemDetail.setTitle("Erro Interno do Servidor");
         problemDetail.setProperty("detalhe", ex.getMessage());
         problemDetail.setProperty("timestamp", Instant.now());
         return problemDetail;
     }
 }
-
