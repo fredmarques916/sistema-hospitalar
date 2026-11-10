@@ -1,0 +1,154 @@
+.auth-nav {
+  height: 64px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--ds-slate-200, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+
+.auth-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--ds-navy-900, #0f1d30);
+  transition: opacity 0.15s ease;
+}
+
+.auth-nav-brand:hover {
+  opacity: 0.85;
+}
+
+.auth-nav-brand-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--ds-blue-600, #1d68bd);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(29, 104, 189, 0.25);
+}
+
+.auth-nav-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-nav-brand-text strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ds-navy-900, #0f1d30);
+  line-height: 1.2;
+}
+
+.auth-nav-brand-text span {
+  font-size: 11px;
+  color: var(--ds-slate-500, #64748b);
+}
+
+.auth-nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-nav-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ds-slate-600, #475569);
+  text-decoration: none;
+  padding: 7px 14px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.auth-nav-link:hover {
+  color: var(--ds-blue-600, #1d68bd);
+  background: #f1f5f9;
+}
+
+.auth-nav-link.active {
+  color: var(--ds-blue-600, #1d68bd);
+  background: rgba(29, 104, 189, 0.08);
+}
+
+.auth-nav-link.highlight {
+  background: var(--ds-blue-600, #1d68bd);
+  color: #ffffff;
+}
+
+.auth-nav-link.highlight:hover {
+  background: #175499;
+}
+
+.auth-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ds-slate-800, #1e293b);
+  background: #f8fafc;
+  border: 1px solid var(--ds-slate-200, #e2e8f0);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.auth-user-role-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.auth-user-role-badge.admin {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.auth-user-role-badge.medico {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.auth-nav-btn-sair {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid var(--ds-slate-300, #cbd5e1);
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.auth-nav-btn-sair:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+@media (max-width: 640px) {
+  .auth-nav {
+    padding: 0 16px;
+  }
+  .auth-nav-brand-text span {
+    display: none;
+  }
+}
