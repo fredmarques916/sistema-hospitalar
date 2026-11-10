@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
-import "../../styles/forms.css";
 
 function Pacientes() {
   const [pacientes, setPacientes] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  // Formulário
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
   const [dataNascimento, setDataNascimento] = useState("");
@@ -20,11 +22,15 @@ function Pacientes() {
   }, []);
 
   async function carregarPacientes() {
+    setCarregando(true);
+    setMensagemErro("");
     try {
       const dados = await api.getPacientes();
       setPacientes(dados || []);
     } catch (err) {
-      console.error(err);
+      setMensagemErro(err.message);
+    } finally {
+      setCarregando(false);
     }
   }
 
@@ -44,7 +50,7 @@ function Pacientes() {
 
     try {
       const novo = await api.createPaciente(payload);
-      setMensagemSucesso(`Paciente ${novo.nome} cadastrado com sucesso!`);
+      setMensagemSucesso(`Paciente ${novo.nome} cadastrado com sucesso no SQLite!`);
       setPacientes([novo, ...pacientes]);
       setNome("");
       setCpf("");
@@ -53,38 +59,53 @@ function Pacientes() {
       setEmail("");
       setEndereco("");
     } catch (err) {
-      setMensagemErro(err.message || "Erro ao cadastrar paciente.");
+      setMensagemErro(err.message);
     }
   }
 
-  const pacientesFiltrados = busca
-    ? pacientes.filter(
-        (p) =>
-          p.nome.toLowerCase().includes(busca.toLowerCase()) ||
-          p.cpf.includes(busca)
-      )
-    : pacientes;
+  async function handleExcluir(id, nomePaciente) {
+    if (!window.confirm(`Tem certeza que deseja remover o cadastro de ${nomePaciente}?`)) return;
+    setMensagemSucesso("");
+    setMensagemErro("");
+    try {
+      await api.deletePaciente(id);
+      setMensagemSucesso(`Paciente ${nomePaciente} removido.`);
+      setPacientes(pacientes.filter((p) => p.id !== id));
+    } catch (err) {
+      setMensagemErro(err.message);
+    }
+  }
+
+  const pacientesFiltrados = pacientes.filter(
+    (p) =>
+      p.nome.toLowerCase().includes(busca.toLowerCase()) ||
+      p.cpf.includes(busca) ||
+      (p.email && p.email.toLowerCase().includes(busca.toLowerCase()))
+  );
 
   return (
     <div>
-      <div className="tituloPagina">
-        <div>
+      <div className="ds-page-header">
+        <div className="ds-page-title">
           <h1>Prontuário & Cadastro de Pacientes</h1>
-          <p>Registro cadastral unificado de pacientes para atendimento e internação</p>
+          <p>Identificação unificada de pacientes para atendimento clínico e internação hospitalar</p>
         </div>
       </div>
 
-      {mensagemSucesso && <div className="alertaSucesso">{mensagemSucesso}</div>}
-      {mensagemErro && <div className="alertaErro">{mensagemErro}</div>}
+      {mensagemSucesso && <div className="ds-alert ds-alert-success">{mensagemSucesso}</div>}
+      {mensagemErro && <div className="ds-alert ds-alert-danger">{mensagemErro}</div>}
 
-      <div className="formulario">
-        <h2>Novo Paciente</h2>
+      <div className="ds-card" style={{ marginBottom: "28px" }}>
+        <div className="ds-card-header">
+          <div className="ds-card-title">Novo Paciente</div>
+        </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="gridFormulario">
-            <div>
-              <label>Nome Completo *</label>
+          <div className="ds-form-grid">
+            <div className="ds-field">
+              <label className="ds-label">Nome Completo *</label>
               <input
+                className="ds-input"
                 type="text"
                 placeholder="Ex: Maria da Silva"
                 value={nome}
@@ -93,9 +114,10 @@ function Pacientes() {
               />
             </div>
 
-            <div>
-              <label>CPF *</label>
+            <div className="ds-field">
+              <label className="ds-label">CPF *</label>
               <input
+                className="ds-input"
                 type="text"
                 placeholder="000.000.000-00"
                 value={cpf}
@@ -104,9 +126,10 @@ function Pacientes() {
               />
             </div>
 
-            <div>
-              <label>Data de Nascimento *</label>
+            <div className="ds-field">
+              <label className="ds-label">Data de Nascimento *</label>
               <input
+                className="ds-input"
                 type="date"
                 value={dataNascimento}
                 onChange={(e) => setDataNascimento(e.target.value)}
@@ -114,9 +137,10 @@ function Pacientes() {
               />
             </div>
 
-            <div>
-              <label>Telefone para Contato</label>
+            <div className="ds-field">
+              <label className="ds-label">Telefone de Contato</label>
               <input
+                className="ds-input"
                 type="text"
                 placeholder="(31) 98765-4321"
                 value={telefone}
@@ -124,9 +148,10 @@ function Pacientes() {
               />
             </div>
 
-            <div>
-              <label>E-mail</label>
+            <div className="ds-field">
+              <label className="ds-label">E-mail</label>
               <input
+                className="ds-input"
                 type="email"
                 placeholder="paciente@email.com"
                 value={email}
@@ -134,67 +159,97 @@ function Pacientes() {
               />
             </div>
 
-            <div>
-              <label>Endereço Residencial</label>
+            <div className="ds-field">
+              <label className="ds-label">Endereço Residencial</label>
               <input
+                className="ds-input"
                 type="text"
-                placeholder="Rua, número, bairro e cidade"
+                placeholder="Rua, número, bairro, cidade"
                 value={endereco}
                 onChange={(e) => setEndereco(e.target.value)}
               />
             </div>
           </div>
 
-          <button type="submit" className="botaoPrincipal">
-            Salvar Paciente
-          </button>
+          <div style={{ marginTop: "20px" }}>
+            <button type="submit" className="ds-btn ds-btn-primary">
+              Salvar Paciente
+            </button>
+          </div>
         </form>
       </div>
 
-      <div className="painel">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <h2>Pacientes Cadastrados ({pacientesFiltrados.length})</h2>
+      <div className="ds-card">
+        <div className="ds-card-header">
+          <div className="ds-card-title">Pacientes Cadastrados ({pacientesFiltrados.length})</div>
           <input
-            style={{ padding: "6px 14px", fontSize: "0.85rem", width: "240px" }}
+            className="ds-input"
+            style={{ width: "240px", padding: "6px 12px", fontSize: "0.825rem" }}
             placeholder="Buscar por nome ou CPF..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
           />
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>CPF</th>
-              <th>Nascimento</th>
-              <th>Contato</th>
-              <th>Endereço</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pacientesFiltrados.length === 0 ? (
-              <tr>
-                <td colSpan="5" style={{ textAlign: "center", color: "var(--text-muted)", padding: "24px" }}>
-                  Nenhum paciente cadastrado.
-                </td>
-              </tr>
-            ) : (
-              pacientesFiltrados.map((p) => (
-                <tr key={p.id}>
-                  <td><strong>{p.nome}</strong></td>
-                  <td><code>{p.cpf}</code></td>
-                  <td>{p.dataNascimento}</td>
-                  <td>
-                    <div>{p.telefone || "Não informado"}</div>
-                    <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{p.email}</div>
-                  </td>
-                  <td>{p.endereco || "Não informado"}</td>
+        {carregando ? (
+          <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
+            Buscando pacientes no SQLite...
+          </div>
+        ) : (
+          <div className="ds-table-container">
+            <table className="ds-table">
+              <thead>
+                <tr>
+                  <th>Nome do Paciente</th>
+                  <th>Documento (CPF)</th>
+                  <th>Nascimento</th>
+                  <th>Contatos</th>
+                  <th>Endereço</th>
+                  <th>Ações</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {pacientesFiltrados.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                      Nenhum paciente cadastrado.
+                    </td>
+                  </tr>
+                ) : (
+                  pacientesFiltrados.map((p) => (
+                    <tr key={p.id}>
+                      <td>
+                        <strong>{p.nome}</strong>
+                      </td>
+                      <td>
+                        <code className="tabular-nums" style={{ color: "var(--text-muted)" }}>
+                          {p.cpf}
+                        </code>
+                      </td>
+                      <td>
+                        <span className="tabular-nums">{p.dataNascimento}</span>
+                      </td>
+                      <td>
+                        <div>{p.telefone || "Sem telefone"}</div>
+                        <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{p.email}</div>
+                      </td>
+                      <td>{p.endereco || "Não informado"}</td>
+                      <td>
+                        <button
+                          className="ds-btn ds-btn-sm ds-btn-secondary"
+                          style={{ color: "var(--danger)" }}
+                          onClick={() => handleExcluir(p.id, p.nome)}
+                        >
+                          Remover
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

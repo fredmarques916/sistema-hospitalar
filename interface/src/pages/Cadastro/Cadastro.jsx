@@ -14,9 +14,13 @@ function Cadastro() {
     <div className="auth-container">
       <div className="auth-box auth-box--register formulario">
         <div className="auth-header">
-          <div className="auth-logoIcone" aria-hidden="true">+</div>
-          <h2>Hospital</h2>
-          <p>Cadastre seus dados para acessar o sistema.</p>
+          <div className="auth-logoIcone" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 6v12M6 12h12" />
+            </svg>
+          </div>
+          <h2>Hospital Pro</h2>
+          <p>Cadastre seus dados para acessar o sistema de gestão.</p>
         </div>
 
         <form onSubmit={handleCadastro} className="auth-form">

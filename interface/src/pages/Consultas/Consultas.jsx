@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
-import "../../styles/forms.css";
 
 function Consultas() {
   const [consultas, setConsultas] = useState([]);
   const [pacientes, setPacientes] = useState([]);
   const [profissionais, setProfissionais] = useState([]);
-  
+  const [carregando, setCarregando] = useState(true);
+
+  // Formulário de novo atendimento
   const [pacienteId, setPacienteId] = useState("");
   const [profissionalId, setProfissionalId] = useState("");
   const [dataConsulta, setDataConsulta] = useState(new Date().toISOString().split("T")[0]);
@@ -22,15 +23,27 @@ function Consultas() {
   const [descricaoProcedimento, setDescricaoProcedimento] = useState("");
   const [obsPreOperatorias, setObsPreOperatorias] = useState("");
 
+  // Filtros
+  const [filtroModalidade, setFiltroModalidade] = useState("TODAS");
+  const [filtroSituacao, setFiltroSituacao] = useState("TODAS");
+
+  // Feedback e Modais
   const [mensagemSucesso, setMensagemSucesso] = useState("");
   const [mensagemErro, setMensagemErro] = useState("");
-  const [filtroSituacao, setFiltroSituacao] = useState("");
+
+  // Modal de Transição de Estado
+  const [modalAberto, setModalAberto] = useState(false);
+  const [consultaSelecionada, setConsultaSelecionada] = useState(null);
+  const [acaoModal, setAcaoModal] = useState("");
+  const [observacoesModal, setObservacoesModal] = useState("");
 
   useEffect(() => {
     carregarDados();
   }, []);
 
   async function carregarDados() {
+    setCarregando(true);
+    setMensagemErro("");
     try {
       const [listaConsultas, listaPacientes, listaProfissionais] = await Promise.all([
         api.getConsultas(),
@@ -41,18 +54,16 @@ function Consultas() {
       setPacientes(listaPacientes || []);
       setProfissionais(listaProfissionais || []);
     } catch (err) {
-      console.error(err);
+      setMensagemErro(err.message);
+    } finally {
+      setCarregando(false);
     }
   }
 
-  // Filtra profissionais de acordo com a modalidade selecionada para auxiliar o usuário
-  const profissionaisFiltrados = profissionais.filter((p) => {
-    if (modalidade === "PROCEDIMENTO_CIRURGICO") {
-      return p.categoria === "CIRURGIAO";
-    }
-    if (modalidade === "ESPECIALIZADA") {
-      return p.categoria === "ESPECIALISTA";
-    }
+  // Filtra médicos no dropdown de acordo com a modalidade
+  const profissionaisDisponiveis = profissionais.filter((p) => {
+    if (modalidade === "PROCEDIMENTO_CIRURGICO") return p.categoria === "CIRURGIAO";
+    if (modalidade === "ESPECIALIZADA") return p.categoria === "ESPECIALISTA";
     return true;
   });
 
@@ -60,11 +71,6 @@ function Consultas() {
     e.preventDefault();
     setMensagemSucesso("");
     setMensagemErro("");
-
-    if (!pacienteId || !profissionalId || !dataConsulta || !horario || !motivo) {
-      setMensagemErro("Preencha todos os campos obrigatórios.");
-      return;
-    }
 
     const payload = {
       pacienteId: Number(pacienteId),
@@ -83,57 +89,105 @@ function Consultas() {
 
     try {
       const nova = await api.createConsulta(payload);
-      setMensagemSucesso("Atendimento/Consulta agendado com sucesso!");
+      setMensagemSucesso(`Atendimento #${nova.id} (${nova.modalidade}) agendado com sucesso no SQLite!`);
       setConsultas([nova, ...consultas]);
-      // Limpa formulário
       setMotivo("");
       setObservacoes("");
       setTipoCirurgia("");
       setDescricaoProcedimento("");
     } catch (err) {
-      setMensagemErro(err.message || "Erro ao agendar consulta. Verifique as regras de negócio.");
+      setMensagemErro(err.message);
     }
   }
 
-  async function handleAlterarSituacao(id, novaSituacao, obs = "") {
+  function abrirModal(consulta, acao) {
+    setConsultaSelecionada(consulta);
+    setAcaoModal(acao);
+    setObservacoesModal("");
+    setModalAberto(true);
+  }
+
+  async function handleConfirmarModal() {
+    if (!consultaSelecionada) return;
+    setMensagemSucesso("");
+    setMensagemErro("");
+
+    try {
+      const atualizada = await api.patchConsultaSituacao(
+        consultaSelecionada.id,
+        acaoModal,
+        observacoesModal
+      );
+      setMensagemSucesso(`Situação da consulta #${atualizada.id} atualizada para ${acaoModal}!`);
+      setConsultas(consultas.map((c) => (c.id === atualizada.id ? atualizada : c)));
+      setModalAberto(false);
+    } catch (err) {
+      setMensagemErro(err.message);
+      setModalAberto(false);
+    }
+  }
+
+  async function handleAcaoRapida(id, novaSituacao) {
     setMensagemSucesso("");
     setMensagemErro("");
     try {
-      const atualizada = await api.patchConsultaSituacao(id, novaSituacao, obs);
+      const atualizada = await api.patchConsultaSituacao(id, novaSituacao);
       setMensagemSucesso(`Situação atualizada para ${novaSituacao} com sucesso!`);
       setConsultas(consultas.map((c) => (c.id === id ? atualizada : c)));
     } catch (err) {
-      setMensagemErro(err.message || "Não foi possível alterar a situação.");
+      setMensagemErro(err.message);
     }
   }
 
-  const consultasFiltradas = filtroSituacao
-    ? consultas.filter((c) => c.situacao === filtroSituacao)
-    : consultas;
+  async function handleExcluir(id) {
+    if (!window.confirm(`Tem certeza que deseja excluir a consulta #${id} do banco de dados?`)) return;
+    setMensagemSucesso("");
+    setMensagemErro("");
+    try {
+      await api.deleteConsulta(id);
+      setMensagemSucesso(`Consulta #${id} excluída com sucesso.`);
+      setConsultas(consultas.filter((c) => c.id !== id));
+    } catch (err) {
+      setMensagemErro(err.message);
+    }
+  }
+
+  const consultasFiltradas = consultas.filter((c) => {
+    const matchModalidade = filtroModalidade === "TODAS" || c.modalidade === filtroModalidade;
+    const matchSituacao = filtroSituacao === "TODAS" || c.situacao === filtroSituacao;
+    return matchModalidade && matchSituacao;
+  });
 
   return (
     <div>
-      <div className="tituloPagina">
-        <div>
+      <div className="ds-page-header">
+        <div className="ds-page-title">
           <h1>Atendimentos & Consultas</h1>
-          <p>Gestão unificada de consultas de rotina, especializadas, emergências e cirurgias</p>
+          <p>Gestão integrada de rotina, especialidades, pronto-socorro e procedimentos cirúrgicos</p>
         </div>
       </div>
 
-      {mensagemSucesso && <div className="alertaSucesso">{mensagemSucesso}</div>}
-      {mensagemErro && <div className="alertaErro">{mensagemErro}</div>}
+      {mensagemSucesso && <div className="ds-alert ds-alert-success">{mensagemSucesso}</div>}
+      {mensagemErro && <div className="ds-alert ds-alert-danger">{mensagemErro}</div>}
 
-      <div className="formulario">
-        <h2>Novo Atendimento / Agendamento</h2>
+      {/* Formulário Novo Atendimento */}
+      <div className="ds-card" style={{ marginBottom: "28px" }}>
+        <div className="ds-card-header">
+          <div className="ds-card-title">Novo Atendimento / Agendamento</div>
+        </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="gridFormulario">
-            <div>
-              <label>Modalidade de Atendimento *</label>
-              <select value={modalidade} onChange={(e) => {
-                setModalidade(e.target.value);
-                setProfissionalId("");
-              }}>
+          <div className="ds-form-grid">
+            <div className="ds-field">
+              <label className="ds-label">Modalidade de Atendimento *</label>
+              <select
+                className="ds-select"
+                value={modalidade}
+                onChange={(e) => {
+                  setModalidade(e.target.value);
+                  setProfissionalId("");
+                }}
+              >
                 <option value="ROTINA">Consulta de Rotina</option>
                 <option value="ESPECIALIZADA">Consulta Especializada</option>
                 <option value="EMERGENCIA">Atendimento de Emergência</option>
@@ -141,9 +195,14 @@ function Consultas() {
               </select>
             </div>
 
-            <div>
-              <label>Paciente *</label>
-              <select value={pacienteId} onChange={(e) => setPacienteId(e.target.value)}>
+            <div className="ds-field">
+              <label className="ds-label">Paciente *</label>
+              <select
+                className="ds-select"
+                value={pacienteId}
+                onChange={(e) => setPacienteId(e.target.value)}
+                required
+              >
                 <option value="">Selecione o paciente</option>
                 {pacientes.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -153,90 +212,123 @@ function Consultas() {
               </select>
             </div>
 
-            <div>
-              <label>
+            <div className="ds-field">
+              <label className="ds-label">
                 Profissional Responsável *
-                {modalidade === "PROCEDIMENTO_CIRURGICO" && " (Apenas Cirurgiões)"}
-                {modalidade === "ESPECIALIZADA" && " (Apenas Especialistas)"}
+                {modalidade === "PROCEDIMENTO_CIRURGICO" && " [Exclusivo Cirurgiões]"}
+                {modalidade === "ESPECIALIZADA" && " [Especialistas]"}
               </label>
-              <select value={profissionalId} onChange={(e) => setProfissionalId(e.target.value)}>
-                <option value="">Selecione o profissional</option>
-                {profissionaisFiltrados.map((p) => (
+              <select
+                className="ds-select"
+                value={profissionalId}
+                onChange={(e) => setProfissionalId(e.target.value)}
+                required
+              >
+                <option value="">Selecione o médico responsável</option>
+                {profissionaisDisponiveis.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.nome} - {p.categoria} {p.especialidade ? `(${p.especialidade})` : ""}
+                    {p.nome} — {p.categoria} {p.especialidade ? `(${p.especialidade})` : ""}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div>
-              <label>Data *</label>
-              <input type="date" value={dataConsulta} onChange={(e) => setDataConsulta(e.target.value)} />
-            </div>
-
-            <div>
-              <label>Horário *</label>
-              <input type="time" value={horario} onChange={(e) => setHorario(e.target.value)} />
-            </div>
-
-            <div>
-              <label>Motivo do Atendimento *</label>
+            <div className="ds-field">
+              <label className="ds-label">Data *</label>
               <input
-                placeholder="Ex: Check-up, dor no peito, cirurgia"
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
+                className="ds-input"
+                type="date"
+                value={dataConsulta}
+                onChange={(e) => setDataConsulta(e.target.value)}
+                required
               />
             </div>
 
-            {/* Campos condicionais de Consulta Especializada */}
+            <div className="ds-field">
+              <label className="ds-label">Horário *</label>
+              <input
+                className="ds-input"
+                type="time"
+                value={horario}
+                onChange={(e) => setHorario(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="ds-field">
+              <label className="ds-label">Motivo do Atendimento *</label>
+              <input
+                className="ds-input"
+                placeholder="Ex: Avaliação de rotina, dores lombares"
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Campos Dinâmicos: Especializada */}
             {modalidade === "ESPECIALIZADA" && (
-              <div>
-                <label>Especialidade Requerida *</label>
-                <select value={especialidadeRequerida} onChange={(e) => setEspecialidadeRequerida(e.target.value)}>
+              <div className="ds-field">
+                <label className="ds-label">Especialidade Requerida *</label>
+                <select
+                  className="ds-select"
+                  value={especialidadeRequerida}
+                  onChange={(e) => setEspecialidadeRequerida(e.target.value)}
+                >
                   <option value="Cardiologia">Cardiologia</option>
                   <option value="Ortopedia">Ortopedia</option>
                   <option value="Neurologia">Neurologia</option>
                   <option value="Pediatria">Pediatria</option>
+                  <option value="Dermatologia">Dermatologia</option>
                 </select>
               </div>
             )}
 
-            {/* Campos condicionais de Emergência */}
+            {/* Campos Dinâmicos: Emergência */}
             {modalidade === "EMERGENCIA" && (
-              <div>
-                <label>Classificação de Prioridade *</label>
-                <select value={prioridadeEmergencia} onChange={(e) => setPrioridadeEmergencia(e.target.value)}>
-                  <option value="BAIXA">Baixa (Verde)</option>
-                  <option value="MODERADA">Moderada (Amarela)</option>
-                  <option value="ALTA">Alta (Laranja)</option>
-                  <option value="CRITICA">Crítica (Vermelha - Emergência Imediata)</option>
+              <div className="ds-field">
+                <label className="ds-label">Classificação de Risco (Manchester) *</label>
+                <select
+                  className="ds-select"
+                  value={prioridadeEmergencia}
+                  onChange={(e) => setPrioridadeEmergencia(e.target.value)}
+                >
+                  <option value="BAIXA">Baixa (Verde — Não urgente)</option>
+                  <option value="MODERADA">Moderada (Amarela — Urgente)</option>
+                  <option value="ALTA">Alta (Laranja — Muito urgente)</option>
+                  <option value="CRITICA">Crítica (Vermelha — Emergência Imediata)</option>
                 </select>
               </div>
             )}
 
-            {/* Campos condicionais de Cirurgia */}
+            {/* Campos Dinâmicos: Procedimento Cirúrgico */}
             {modalidade === "PROCEDIMENTO_CIRURGICO" && (
               <>
-                <div>
-                  <label>Tipo de Cirurgia *</label>
+                <div className="ds-field">
+                  <label className="ds-label">Tipo de Cirurgia *</label>
                   <input
-                    placeholder="Ex: Apendicectomia, Colecistectomia"
+                    className="ds-input"
+                    placeholder="Ex: Apendicectomia, Artroscopia"
                     value={tipoCirurgia}
                     onChange={(e) => setTipoCirurgia(e.target.value)}
+                    required
                   />
                 </div>
-                <div>
-                  <label>Descrição do Procedimento *</label>
+                <div className="ds-field">
+                  <label className="ds-label">Descrição do Procedimento *</label>
                   <input
-                    placeholder="Descrição detalhada"
+                    className="ds-input"
+                    placeholder="Detalhes técnicos da intervenção"
                     value={descricaoProcedimento}
                     onChange={(e) => setDescricaoProcedimento(e.target.value)}
+                    required
                   />
                 </div>
-                <div>
-                  <label>Observações Pré-Operatórias</label>
+                <div className="ds-field">
+                  <label className="ds-label">Observações Pré-Operatórias</label>
                   <input
-                    placeholder="Ex: Jejum 8h, avaliação cardiológica"
+                    className="ds-input"
+                    placeholder="Ex: Jejum 8h, exames de coagulação OK"
                     value={obsPreOperatorias}
                     onChange={(e) => setObsPreOperatorias(e.target.value)}
                   />
@@ -245,32 +337,53 @@ function Consultas() {
             )}
           </div>
 
-          <div className="campoObservacao">
-            <label>Observações Gerais / Anotações Clínicas</label>
+          <div className="ds-field" style={{ marginTop: "16px" }}>
+            <label className="ds-label">Observações Clínicas / Histórico Prévio</label>
             <textarea
-              rows="3"
-              placeholder="Anotações sobre o quadro do paciente..."
+              className="ds-textarea"
+              rows="2"
+              placeholder="Anotações adicionais do paciente..."
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
             />
           </div>
 
-          <button type="submit" className="botaoPrincipal">
-            Confirmar Agendamento / Atendimento
-          </button>
+          <div style={{ marginTop: "20px" }}>
+            <button type="submit" className="ds-btn ds-btn-primary">
+              Confirmar Agendamento / Registro
+            </button>
+          </div>
         </form>
       </div>
 
-      <div className="painel">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <h2>Atendimentos Registrados ({consultasFiltradas.length})</h2>
-          <div>
+      {/* Lista de Atendimentos */}
+      <div className="ds-card">
+        <div className="ds-card-header">
+          <div className="ds-card-title">
+            <span>Atendimentos Cadastrados ({consultasFiltradas.length})</span>
+          </div>
+
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             <select
-              style={{ padding: "6px 12px", fontSize: "0.85rem" }}
+              className="ds-select"
+              style={{ width: "auto", padding: "6px 12px", fontSize: "0.8rem" }}
+              value={filtroModalidade}
+              onChange={(e) => setFiltroModalidade(e.target.value)}
+            >
+              <option value="TODAS">Todas Modalidades</option>
+              <option value="ROTINA">Rotina</option>
+              <option value="ESPECIALIZADA">Especializada</option>
+              <option value="EMERGENCIA">Emergência</option>
+              <option value="PROCEDIMENTO_CIRURGICO">Cirurgia</option>
+            </select>
+
+            <select
+              className="ds-select"
+              style={{ width: "auto", padding: "6px 12px", fontSize: "0.8rem" }}
               value={filtroSituacao}
               onChange={(e) => setFiltroSituacao(e.target.value)}
             >
-              <option value="">Todas as situações</option>
+              <option value="TODAS">Todas Situações</option>
               <option value="AGENDADA">Agendada</option>
               <option value="CONFIRMADA">Confirmada</option>
               <option value="EM_ATENDIMENTO">Em Atendimento</option>
@@ -281,108 +394,186 @@ function Consultas() {
           </div>
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Paciente</th>
-              <th>Profissional</th>
-              <th>Modalidade</th>
-              <th>Data/Hora</th>
-              <th>Situação</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {consultasFiltradas.length === 0 ? (
-              <tr>
-                <td colSpan="6" style={{ textAlign: "center", color: "var(--text-muted)", padding: "24px" }}>
-                  Nenhum atendimento encontrado.
-                </td>
-              </tr>
-            ) : (
-              consultasFiltradas.map((c) => {
-                const situacaoClass = `badge-${c.situacao.toLowerCase().replace("_", "-")}`;
-                return (
-                  <tr key={c.id}>
-                    <td>
-                      <strong>{c.paciente?.nome || "Paciente"}</strong>
-                      <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{c.motivo}</div>
-                    </td>
-                    <td>
-                      {c.profissional?.nome}
-                      <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                        {c.profissional?.categoria}
-                        {c.especialidadeRequerida ? ` (${c.especialidadeRequerida})` : ""}
-                      </div>
-                    </td>
-                    <td>
-                      <span className="badge" style={{ background: "#f1f5f9", color: "#334155" }}>
-                        {c.modalidade}
-                      </span>
-                      {c.prioridadeEmergencia && (
-                        <div style={{ marginTop: "4px" }}>
-                          <span className={`badge badge-prioridade-${c.prioridadeEmergencia.toLowerCase()}`}>
-                            {c.prioridadeEmergencia}
-                          </span>
-                        </div>
-                      )}
-                      {c.tipoCirurgia && (
-                        <div style={{ fontSize: "0.75rem", color: "#0284c7", marginTop: "2px" }}>
-                          Cirurgia: {c.tipoCirurgia}
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      {c.dataConsulta} às {c.horario}
-                    </td>
-                    <td>
-                      <span className={`badge ${situacaoClass}`}>
-                        {c.situacao}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="acoesTabela">
-                        {c.situacao === "AGENDADA" && (
-                          <button
-                            className="btnAcao"
-                            onClick={() => handleAlterarSituacao(c.id, "CONFIRMADA")}
-                          >
-                            Confirmar
-                          </button>
-                        )}
-                        {(c.situacao === "AGENDADA" || c.situacao === "CONFIRMADA") && (
-                          <button
-                            className="btnAcao btnIniciar"
-                            onClick={() => handleAlterarSituacao(c.id, "EM_ATENDIMENTO")}
-                          >
-                            Iniciar
-                          </button>
-                        )}
-                        {c.situacao === "EM_ATENDIMENTO" && (
-                          <button
-                            className="btnAcao btnConcluir"
-                            onClick={() => handleAlterarSituacao(c.id, "CONCLUIDA", "Atendimento finalizado com sucesso")}
-                          >
-                            Concluir
-                          </button>
-                        )}
-                        {c.situacao !== "CONCLUIDA" && c.situacao !== "CANCELADA" && (
-                          <button
-                            className="btnAcao btnCancelar"
-                            onClick={() => handleAlterarSituacao(c.id, "CANCELADA", "Cancelado pelo operador")}
-                          >
-                            Cancelar
-                          </button>
-                        )}
-                      </div>
+        {carregando ? (
+          <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
+            Buscando atendimentos no SQLite...
+          </div>
+        ) : (
+          <div className="ds-table-container">
+            <table className="ds-table">
+              <thead>
+                <tr>
+                  <th>Paciente</th>
+                  <th>Médico Responsável</th>
+                  <th>Modalidade & Detalhes</th>
+                  <th>Data & Horário</th>
+                  <th>Situação</th>
+                  <th>Ações de Fluxo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {consultasFiltradas.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                      Nenhum atendimento correspondente aos filtros.
                     </td>
                   </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                ) : (
+                  consultasFiltradas.map((c) => {
+                    const situacaoBadge = `badge-${c.situacao?.toLowerCase().replace("_", "-")}`;
+                    return (
+                      <tr key={c.id}>
+                        <td>
+                          <strong>{c.paciente?.nome}</strong>
+                          <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{c.motivo}</div>
+                        </td>
+                        <td>
+                          <div>{c.profissional?.nome}</div>
+                          <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                            {c.profissional?.categoria} {c.profissional?.especialidade ? `• ${c.profissional.especialidade}` : ""}
+                          </div>
+                        </td>
+                        <td>
+                          <span className="ds-badge" style={{ background: "#f1f5f9", color: "#334155" }}>
+                            {c.modalidade}
+                          </span>
+                          {c.prioridadeEmergencia && (
+                            <div style={{ marginTop: "4px" }}>
+                              <span className="ds-badge" style={{
+                                background: c.prioridadeEmergencia === "CRITICA" ? "#fee2e2" : "#fffbeb",
+                                color: c.prioridadeEmergencia === "CRITICA" ? "#dc2626" : "#b45309"
+                              }}>
+                                Prioridade: {c.prioridadeEmergencia}
+                              </span>
+                            </div>
+                          )}
+                          {c.tipoCirurgia && (
+                            <div style={{ fontSize: "0.75rem", color: "var(--surgery-text)", marginTop: "2px" }}>
+                              Cirurgia: <strong>{c.tipoCirurgia}</strong>
+                              {c.situacaoProcedimento && ` [${c.situacaoProcedimento}]`}
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          <span className="tabular-nums">{c.dataConsulta}</span> às <span className="tabular-nums">{c.horario}</span>
+                        </td>
+                        <td>
+                          <span className={`ds-badge ${situacaoBadge}`}>
+                            {c.situacao}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                            {c.situacao === "AGENDADA" && (
+                              <button
+                                className="ds-btn ds-btn-sm ds-btn-secondary"
+                                onClick={() => handleAcaoRapida(c.id, "CONFIRMADA")}
+                              >
+                                Confirmar
+                              </button>
+                            )}
+                            {(c.situacao === "AGENDADA" || c.situacao === "CONFIRMADA") && (
+                              <button
+                                className="ds-btn ds-btn-sm"
+                                style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" }}
+                                onClick={() => handleAcaoRapida(c.id, "EM_ATENDIMENTO")}
+                              >
+                                Iniciar
+                              </button>
+                            )}
+                            {c.situacao === "EM_ATENDIMENTO" && (
+                              <button
+                                className="ds-btn ds-btn-sm"
+                                style={{ background: "#ecfdf5", color: "#065f46", border: "1px solid #a7f3d0" }}
+                                onClick={() => abrirModal(c, "CONCLUIDA")}
+                              >
+                                Concluir
+                              </button>
+                            )}
+                            {c.situacao !== "CONCLUIDA" && c.situacao !== "CANCELADA" && (
+                              <button
+                                className="ds-btn ds-btn-sm ds-btn-secondary"
+                                style={{ color: "var(--danger)" }}
+                                onClick={() => abrirModal(c, "CANCELADA")}
+                              >
+                                Cancelar
+                              </button>
+                            )}
+                            {c.situacao !== "CONCLUIDA" && (
+                              <button
+                                className="ds-btn ds-btn-sm"
+                                style={{ background: "transparent", color: "var(--text-dim)", border: "none" }}
+                                title="Excluir do banco"
+                                onClick={() => handleExcluir(c.id)}
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      {/* Modal Semântico de Conclusão / Cancelamento */}
+      {modalAberto && (
+        <div className="ds-modal-backdrop" onClick={() => setModalAberto(false)}>
+          <div className="ds-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ds-modal-header">
+              <h3>
+                {acaoModal === "CONCLUIDA" ? "Concluir Atendimento Clínico" : "Cancelar Atendimento"}
+              </h3>
+              <button
+                style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer" }}
+                onClick={() => setModalAberto(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="ds-modal-body">
+              <p style={{ fontSize: "0.885rem", color: "var(--text-muted)", marginBottom: "16px" }}>
+                Paciente: <strong>{consultaSelecionada?.paciente?.nome}</strong> &bull; Modalidade:{" "}
+                <strong>{consultaSelecionada?.modalidade}</strong>
+              </p>
+
+              <div className="ds-field">
+                <label className="ds-label">
+                  {acaoModal === "CONCLUIDA" ? "Anotações Médicas / Diagnóstico *" : "Motivo do Cancelamento *"}
+                </label>
+                <textarea
+                  className="ds-textarea"
+                  rows="4"
+                  placeholder={
+                    acaoModal === "CONCLUIDA"
+                      ? "Informe as observações de encerramento da consulta ou pós-cirúrgico..."
+                      : "Informe o motivo do cancelamento para registro em auditoria..."
+                  }
+                  value={observacoesModal}
+                  onChange={(e) => setObservacoesModal(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div className="ds-modal-footer">
+              <button className="ds-btn ds-btn-secondary" onClick={() => setModalAberto(false)}>
+                Voltar
+              </button>
+              <button
+                className={`ds-btn ${acaoModal === "CONCLUIDA" ? "ds-btn-primary" : "ds-btn-danger"}`}
+                onClick={handleConfirmarModal}
+              >
+                {acaoModal === "CONCLUIDA" ? "Salvar & Concluir" : "Confirmar Cancelamento"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

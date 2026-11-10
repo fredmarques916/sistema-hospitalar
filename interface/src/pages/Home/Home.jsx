@@ -24,11 +24,15 @@ function Home() {
   return (
     <div className="home-container">
       <header className="home-header">
-        <Link to="/" className="home-logo" aria-label="Hospital — página inicial">
-          <span className="home-logoIcone" aria-hidden="true">+</span>
+        <Link to="/" className="home-logo" aria-label="Hospital Pro — página inicial">
+          <span className="home-logoIcone" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 6v12M6 12h12" />
+            </svg>
+          </span>
           <span className="home-logoText">
-            <strong>Hospital</strong>
-            <span>Sistema de Gestão</span>
+            <strong>Hospital Pro</strong>
+            <span>Sistema de Gestão Integrada</span>
           </span>
         </Link>
 

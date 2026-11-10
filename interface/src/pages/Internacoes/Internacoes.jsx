@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
-import "../../styles/forms.css";
 
 function Internacoes() {
   const [internacoes, setInternacoes] = useState([]);
   const [pacientes, setPacientes] = useState([]);
   const [profissionais, setProfissionais] = useState([]);
   const [quartos, setQuartos] = useState([]);
+  const [carregando, setCarregando] = useState(true);
 
+  // Formulário
   const [pacienteId, setPacienteId] = useState("");
   const [profissionalId, setProfissionalId] = useState("");
   const [quartoId, setQuartoId] = useState("");
@@ -15,18 +16,26 @@ function Internacoes() {
   const [dataPrevistaAlta, setDataPrevistaAlta] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
+  // Filtros
+  const [filtroApenasAtivas, setFiltroApenasAtivas] = useState(true);
+
+  // Modais e Feedback
   const [mensagemSucesso, setMensagemSucesso] = useState("");
   const [mensagemErro, setMensagemErro] = useState("");
-  const [filtroAtivas, setFiltroAtivas] = useState(true);
+  const [modalAltaAberto, setModalAltaAberto] = useState(false);
+  const [internacaoSelecionada, setInternacaoSelecionada] = useState(null);
+  const [observacoesAlta, setObservacoesAlta] = useState("");
 
   useEffect(() => {
     carregarDados();
-  }, [filtroAtivas]);
+  }, [filtroApenasAtivas]);
 
   async function carregarDados() {
+    setCarregando(true);
+    setMensagemErro("");
     try {
       const [listaInternacoes, listaPacientes, listaProfissionais, listaQuartos] = await Promise.all([
-        api.getInternacoes(filtroAtivas ? "apenasAtivas=true" : ""),
+        api.getInternacoes(filtroApenasAtivas ? "apenasAtivas=true" : ""),
         api.getPacientes(),
         api.getProfissionais(),
         api.getQuartos()
@@ -36,7 +45,9 @@ function Internacoes() {
       setProfissionais(listaProfissionais || []);
       setQuartos(listaQuartos || []);
     } catch (err) {
-      console.error(err);
+      setMensagemErro(err.message);
+    } finally {
+      setCarregando(false);
     }
   }
 
@@ -46,11 +57,6 @@ function Internacoes() {
     e.preventDefault();
     setMensagemSucesso("");
     setMensagemErro("");
-
-    if (!pacienteId || !profissionalId || !quartoId) {
-      setMensagemErro("Selecione o paciente, o profissional responsável e o quarto.");
-      return;
-    }
 
     const payload = {
       pacienteId: Number(pacienteId),
@@ -63,51 +69,67 @@ function Internacoes() {
 
     try {
       const nova = await api.createInternacao(payload);
-      setMensagemSucesso(`Internação registrada com sucesso para ${nova.paciente?.nome}!`);
+      setMensagemSucesso(`Internação de ${nova.paciente?.nome} no Quarto ${nova.quarto?.numeroIdentificacao} confirmada no SQLite!`);
       carregarDados();
+      setPacienteId("");
+      setProfissionalId("");
+      setQuartoId("");
       setObservacoes("");
       setDataPrevistaAlta("");
     } catch (err) {
-      setMensagemErro(err.message || "Erro ao registrar internação.");
+      setMensagemErro(err.message);
     }
   }
 
-  async function handleAlta(id) {
-    const obsAlta = window.prompt("Observações de alta do paciente:");
-    if (obsAlta === null) return; // cancelou o prompt
+  function abrirModalAlta(internacao) {
+    setInternacaoSelecionada(internacao);
+    setObservacoesAlta("Paciente estável, alta médica autorizada.");
+    setModalAltaAberto(true);
+  }
 
+  async function handleConfirmarAlta() {
+    if (!internacaoSelecionada) return;
     setMensagemSucesso("");
     setMensagemErro("");
 
     try {
-      await api.registrarAlta(id, obsAlta);
-      setMensagemSucesso("Alta hospitalar registrada com sucesso! O leito foi liberado.");
+      await api.registrarAlta(internacaoSelecionada.id, observacoesAlta);
+      setMensagemSucesso(`Alta hospitalar de ${internacaoSelecionada.paciente?.nome} registrada com sucesso. Leito liberado.`);
+      setModalAltaAberto(false);
       carregarDados();
     } catch (err) {
-      setMensagemErro(err.message || "Erro ao registrar alta hospitalar.");
+      setMensagemErro(err.message);
+      setModalAltaAberto(false);
     }
   }
 
   return (
     <div>
-      <div className="tituloPagina">
-        <div>
+      <div className="ds-page-header">
+        <div className="ds-page-title">
           <h1>Internações Hospitalares</h1>
-          <p>Admissão de pacientes, vinculação de leitos e registro de alta médica</p>
+          <p>Admissão de pacientes, alocação de leitos e registro de alta médica com auditoria</p>
         </div>
       </div>
 
-      {mensagemSucesso && <div className="alertaSucesso">{mensagemSucesso}</div>}
-      {mensagemErro && <div className="alertaErro">{mensagemErro}</div>}
+      {mensagemSucesso && <div className="ds-alert ds-alert-success">{mensagemSucesso}</div>}
+      {mensagemErro && <div className="ds-alert ds-alert-danger">{mensagemErro}</div>}
 
-      <div className="formulario">
-        <h2>Registrar Nova Internação</h2>
+      <div className="ds-card" style={{ marginBottom: "28px" }}>
+        <div className="ds-card-header">
+          <div className="ds-card-title">Admitir Paciente para Internação</div>
+        </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="gridFormulario">
-            <div>
-              <label>Paciente *</label>
-              <select value={pacienteId} onChange={(e) => setPacienteId(e.target.value)} required>
+          <div className="ds-form-grid">
+            <div className="ds-field">
+              <label className="ds-label">Paciente *</label>
+              <select
+                className="ds-select"
+                value={pacienteId}
+                onChange={(e) => setPacienteId(e.target.value)}
+                required
+              >
                 <option value="">Selecione o paciente</option>
                 {pacientes.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -117,33 +139,44 @@ function Internacoes() {
               </select>
             </div>
 
-            <div>
-              <label>Médico Responsável *</label>
-              <select value={profissionalId} onChange={(e) => setProfissionalId(e.target.value)} required>
-                <option value="">Selecione o profissional</option>
+            <div className="ds-field">
+              <label className="ds-label">Médico Responsável *</label>
+              <select
+                className="ds-select"
+                value={profissionalId}
+                onChange={(e) => setProfissionalId(e.target.value)}
+                required
+              >
+                <option value="">Selecione o médico</option>
                 {profissionais.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.nome} - {p.categoria}
+                    {p.nome} — {p.categoria}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div>
-              <label>Quarto / Leito Disponível *</label>
-              <select value={quartoId} onChange={(e) => setQuartoId(e.target.value)} required>
+            <div className="ds-field">
+              <label className="ds-label">Quarto / Leito com Vaga *</label>
+              <select
+                className="ds-select"
+                value={quartoId}
+                onChange={(e) => setQuartoId(e.target.value)}
+                required
+              >
                 <option value="">Selecione um quarto disponível</option>
                 {quartosDisponiveis.map((q) => (
                   <option key={q.id} value={q.id}>
-                    Quarto {q.numeroIdentificacao} ({q.tipoQuarto} - Andar {q.andar} | {q.quantidadeOcupantes}/{q.capacidadeMaxima} leitos)
+                    Quarto {q.numeroIdentificacao} ({q.tipoQuarto} &bull; Andar {q.andar} &bull; {q.quantidadeOcupantes}/{q.capacidadeMaxima} leitos)
                   </option>
                 ))}
               </select>
             </div>
 
-            <div>
-              <label>Data/Hora de Entrada *</label>
+            <div className="ds-field">
+              <label className="ds-label">Data e Horário de Entrada *</label>
               <input
+                className="ds-input"
                 type="datetime-local"
                 value={dataEntrada}
                 onChange={(e) => setDataEntrada(e.target.value)}
@@ -151,9 +184,10 @@ function Internacoes() {
               />
             </div>
 
-            <div>
-              <label>Previsão de Alta</label>
+            <div className="ds-field">
+              <label className="ds-label">Previsão de Alta</label>
               <input
+                className="ds-input"
                 type="datetime-local"
                 value={dataPrevistaAlta}
                 onChange={(e) => setDataPrevistaAlta(e.target.value)}
@@ -161,99 +195,175 @@ function Internacoes() {
             </div>
           </div>
 
-          <div className="campoObservacao">
-            <label>Observações Clínicas da Admissão</label>
+          <div className="ds-field" style={{ marginTop: "16px" }}>
+            <label className="ds-label">Indicação Clínica da Admissão</label>
             <textarea
-              rows="3"
-              placeholder="Indicações da internação, quadro clínico..."
+              className="ds-textarea"
+              rows="2"
+              placeholder="Descreva o quadro do paciente na admissão hospitalar..."
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
             />
           </div>
 
-          <button type="submit" className="botaoPrincipal">
-            Confirmar Internação
-          </button>
+          <div style={{ marginTop: "20px" }}>
+            <button type="submit" className="ds-btn ds-btn-primary">
+              Confirmar Admissão & Ocupar Leito
+            </button>
+          </div>
         </form>
       </div>
 
-      <div className="painel">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <h2>Internações ({internacoes.length})</h2>
-          <div>
-            <label style={{ display: "inline-flex", alignItems: "center", gap: "8px", textTransform: "none" }}>
-              <input
-                type="checkbox"
-                checked={filtroAtivas}
-                onChange={(e) => setFiltroAtivas(e.target.checked)}
-              />
-              Exibir apenas internações ativas
-            </label>
+      <div className="ds-card">
+        <div className="ds-card-header">
+          <div className="ds-card-title">Internações Cadastradas ({internacoes.length})</div>
+
+          <div className="ds-tabs" style={{ marginBottom: 0 }}>
+            <button
+              className={`ds-tab ${filtroApenasAtivas ? "active" : ""}`}
+              onClick={() => setFiltroApenasAtivas(true)}
+            >
+              Apenas Internados
+            </button>
+            <button
+              className={`ds-tab ${!filtroApenasAtivas ? "active" : ""}`}
+              onClick={() => setFiltroApenasAtivas(false)}
+            >
+              Todas (Incluindo Altas)
+            </button>
           </div>
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Paciente</th>
-              <th>Médico Responsável</th>
-              <th>Quarto</th>
-              <th>Entrada</th>
-              <th>Previsão de Alta</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {internacoes.length === 0 ? (
-              <tr>
-                <td colSpan="7" style={{ textAlign: "center", color: "var(--text-muted)", padding: "24px" }}>
-                  Nenhuma internação encontrada.
-                </td>
-              </tr>
-            ) : (
-              internacoes.map((i) => (
-                <tr key={i.id}>
-                  <td>
-                    <strong>{i.paciente?.nome}</strong>
-                    <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>CPF: {i.paciente?.cpf}</div>
-                  </td>
-                  <td>{i.profissionalResponsavel?.nome}</td>
-                  <td>
-                    <span className="badge" style={{ background: "#f1f5f9", color: "#334155" }}>
-                      Quarto {i.quarto?.numeroIdentificacao} ({i.quarto?.tipoQuarto})
-                    </span>
-                  </td>
-                  <td>{new Date(i.dataEntrada).toLocaleString("pt-BR")}</td>
-                  <td>
-                    {i.dataPrevistaAlta
-                      ? new Date(i.dataPrevistaAlta).toLocaleString("pt-BR")
-                      : "A definir"}
-                  </td>
-                  <td>
-                    <span
-                      className="badge"
-                      style={{
-                        background: i.ativa ? "#d1fae5" : "#f1f5f9",
-                        color: i.ativa ? "#065f46" : "#64748b"
-                      }}
-                    >
-                      {i.ativa ? "Internado" : "Alta Realizada"}
-                    </span>
-                  </td>
-                  <td>
-                    {i.ativa && (
-                      <button className="btnAcao btnConcluir" onClick={() => handleAlta(i.id)}>
-                        Dar Alta
-                      </button>
-                    )}
-                  </td>
+        {carregando ? (
+          <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
+            Buscando internações no SQLite...
+          </div>
+        ) : (
+          <div className="ds-table-container">
+            <table className="ds-table">
+              <thead>
+                <tr>
+                  <th>Paciente</th>
+                  <th>Médico Assistente</th>
+                  <th>Leito / Quarto</th>
+                  <th>Data de Entrada</th>
+                  <th>Previsão / Alta</th>
+                  <th>Status</th>
+                  <th>Ações</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {internacoes.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                      Nenhuma internação hospitalar registrada.
+                    </td>
+                  </tr>
+                ) : (
+                  internacoes.map((i) => (
+                    <tr key={i.id}>
+                      <td>
+                        <strong>{i.paciente?.nome}</strong>
+                        <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                          CPF: {i.paciente?.cpf}
+                        </div>
+                      </td>
+                      <td>{i.profissionalResponsavel?.nome}</td>
+                      <td>
+                        <span className="ds-badge" style={{ background: "#f1f5f9", color: "#334155" }}>
+                          Quarto {i.quarto?.numeroIdentificacao} ({i.quarto?.tipoQuarto})
+                        </span>
+                      </td>
+                      <td>
+                        <span className="tabular-nums">
+                          {new Date(i.dataEntrada).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                        </span>
+                      </td>
+                      <td>
+                        {i.dataEfetivaAlta ? (
+                          <span style={{ color: "var(--success)" }}>
+                            Alta: {new Date(i.dataEfetivaAlta).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                          </span>
+                        ) : i.dataPrevistaAlta ? (
+                          <span className="tabular-nums">
+                            {new Date(i.dataPrevistaAlta).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                          </span>
+                        ) : (
+                          <span style={{ color: "var(--text-muted)" }}>Acompanhamento</span>
+                        )}
+                      </td>
+                      <td>
+                        <span
+                          className="ds-badge"
+                          style={{
+                            background: i.ativa ? "var(--success-subtle)" : "#f1f5f9",
+                            color: i.ativa ? "var(--success-text)" : "#64748b"
+                          }}
+                        >
+                          {i.ativa ? "Internado" : "Alta Realizada"}
+                        </span>
+                      </td>
+                      <td>
+                        {i.ativa && (
+                          <button
+                            className="ds-btn ds-btn-sm"
+                            style={{ background: "#ecfdf5", color: "#065f46", border: "1px solid #a7f3d0" }}
+                            onClick={() => abrirModalAlta(i)}
+                          >
+                            Dar Alta
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      {/* Modal de Alta Hospitalar */}
+      {modalAltaAberto && (
+        <div className="ds-modal-backdrop" onClick={() => setModalAltaAberto(false)}>
+          <div className="ds-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ds-modal-header">
+              <h3>Registrar Alta Médica Hospitalar</h3>
+              <button
+                style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer" }}
+                onClick={() => setModalAltaAberto(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="ds-modal-body">
+              <p style={{ fontSize: "0.885rem", color: "var(--text-muted)", marginBottom: "16px" }}>
+                Paciente: <strong>{internacaoSelecionada?.paciente?.nome}</strong> &bull; Quarto:{" "}
+                <strong>{internacaoSelecionada?.quarto?.numeroIdentificacao}</strong>
+              </p>
+              <div className="ds-field">
+                <label className="ds-label">Observações e Orientações de Alta *</label>
+                <textarea
+                  className="ds-textarea"
+                  rows="4"
+                  placeholder="Orientações de medicação, cuidados domiciliares..."
+                  value={observacoesAlta}
+                  onChange={(e) => setObservacoesAlta(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div className="ds-modal-footer">
+              <button className="ds-btn ds-btn-secondary" onClick={() => setModalAltaAberto(false)}>
+                Cancelar
+              </button>
+              <button className="ds-btn ds-btn-primary" onClick={handleConfirmarAlta}>
+                Confirmar Alta & Desocupar Leito
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

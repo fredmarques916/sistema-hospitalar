@@ -14,9 +14,13 @@ function Login() {
     <div className="auth-container">
       <div className="auth-box formulario">
         <div className="auth-header">
-          <div className="auth-logoIcone" aria-hidden="true">+</div>
-          <h2>Hospital</h2>
-          <p>Acesse o sistema de gestão hospitalar.</p>
+          <div className="auth-logoIcone" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 6v12M6 12h12" />
+            </svg>
+          </div>
+          <h2>Hospital Pro</h2>
+          <p>Acesse o sistema de gestão hospitalar integrada.</p>
         </div>
 
         <form onSubmit={handleLogin} className="auth-form">
