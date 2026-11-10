@@ -1,0 +1,563 @@
+/* ==========================================================================
+   SISTEMA HOSPITALAR — BESPOKE DESIGN SYSTEM
+   Inspirado nos mais altos padrões de software clínico e moderno (Figma, Linear)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Tipografia */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Superfícies & Cores Neutras */
+  --bg-app: #f8fafc;
+  --bg-sidebar: #0b1320;
+  --bg-sidebar-hover: #132035;
+  --bg-card: #ffffff;
+  --bg-surface: #f1f5f9;
+  --bg-surface-elevated: #e2e8f0;
+
+  /* Texto */
+  --text-main: #09121f;
+  --text-body: #334155;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+
+  /* Cores Clínicas Primárias (Teal / Deep Blue) */
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --primary-focus: rgba(2, 132, 199, 0.18);
+  --primary-subtle: #f0f9ff;
+  --primary-border: #bae6fd;
+
+  /* Semântica Médica */
+  /* Verde / Sucesso / Concluído / Leito Livre */
+  --success: #059669;
+  --success-hover: #047857;
+  --success-subtle: #ecfdf5;
+  --success-border: #a7f3d0;
+  --success-text: #065f46;
+
+  /* Âmbar / Atenção / Em Atendimento / Triagem Moderada */
+  --warning: #d97706;
+  --warning-subtle: #fffbeb;
+  --warning-border: #fde68a;
+  --warning-text: #92400e;
+
+  /* Vermelho / Emergência Crítica / Ocupado */
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --danger-subtle: #fef2f2;
+  --danger-border: #fecdd3;
+  --danger-text: #991b1b;
+
+  /* Roxo / Cirúrgico / Procedimentos */
+  --surgery: #7c3aed;
+  --surgery-subtle: #f5f3ff;
+  --surgery-border: #ddd6fe;
+  --surgery-text: #5b21b6;
+
+  /* Índigo / Especialidades Médicas */
+  --specialist: #4f46e5;
+  --specialist-subtle: #eef2ff;
+  --specialist-border: #c7d2fe;
+  --specialist-text: #3730a3;
+
+  /* Bordas & Divisores */
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-focus: #0284c7;
+
+  /* Sombras Precisas de Duplo Nível */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
+  --shadow-modal: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+
+  /* Raios de Arredondamento */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 9999px;
+
+  /* Transições Suaves */
+  --transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   Base e Reset Universal
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-app);
+  color: var(--text-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Números tabulares para datas, horas, CPFs e dados médicos */
+.tabular-nums, code, time, .badge, th, td {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   Header da Página (Page Header)
+   ========================================================================== */
+.ds-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.ds-page-title h1 {
+  font-size: 1.625rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.ds-page-title p {
+  font-size: 0.885rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   Cards & Superfícies
+   ========================================================================== */
+.ds-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ds-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.ds-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.015em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Stat Cards (Métricas Executivas) */
+.ds-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ds-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-xs);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.ds-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+
+.ds-stat-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.ds-stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-stat-desc {
+  font-size: 0.815rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* ==========================================================================
+   Botões do Design System
+   ========================================================================== */
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.ds-btn:active {
+  transform: scale(0.98);
+}
+
+.ds-btn-primary {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: var(--shadow-xs);
+}
+
+.ds-btn-primary:hover {
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.ds-btn-secondary {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+  color: var(--text-main);
+}
+
+.ds-btn-secondary:hover {
+  background: var(--bg-surface);
+  border-color: var(--border-strong);
+}
+
+.ds-btn-danger {
+  background: var(--danger-subtle);
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+}
+
+.ds-btn-danger:hover {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.ds-btn-sm {
+  padding: 5px 10px;
+  font-size: 0.775rem;
+  border-radius: var(--radius-sm);
+}
+
+/* ==========================================================================
+   Badges & Tags Semânticas
+   ========================================================================== */
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.ds-badge::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge-agendada { background: var(--primary-subtle); color: var(--primary); border: 1px solid var(--primary-border); }
+.badge-confirmada { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.badge-em-atendimento {
+  background: var(--warning-subtle);
+  color: var(--warning-text);
+  border: 1px solid var(--warning-border);
+}
+.badge-em-atendimento::before {
+  animation: pulse-dot 1.5s infinite;
+}
+
+.badge-concluida { background: var(--success-subtle); color: var(--success-text); border: 1px solid var(--success-border); }
+.badge-cancelada { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+.badge-nao-compareceu { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
+
+/* Modalidades */
+.badge-rotina { background: #f1f5f9; color: #334155; }
+.badge-especialista { background: var(--specialist-subtle); color: var(--specialist-text); border: 1px solid var(--specialist-border); }
+.badge-cirurgiao { background: var(--surgery-subtle); color: var(--surgery-text); border: 1px solid var(--surgery-border); }
+.badge-emergencia { background: var(--danger-subtle); color: var(--danger-text); border: 1px solid var(--danger-border); }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+/* ==========================================================================
+   Tabelas de Dados Profissionais (Data Tables)
+   ========================================================================== */
+.ds-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+}
+
+.ds-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.ds-table th {
+  background: #fafafa;
+  color: var(--text-muted);
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.ds-table td {
+  padding: 14px 18px;
+  font-size: 0.885rem;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+.ds-table tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+.ds-table tbody tr:hover {
+  background-color: var(--bg-surface);
+}
+
+.ds-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ==========================================================================
+   Formulários & Controles de Entrada
+   ========================================================================== */
+.ds-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.ds-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.ds-label {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--text-body);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.ds-input, .ds-select, .ds-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+}
+
+.ds-input:focus, .ds-select:focus, .ds-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-focus);
+}
+
+.ds-input::placeholder, .ds-textarea::placeholder {
+  color: var(--text-dim);
+}
+
+/* ==========================================================================
+   Filtros & Navegação por Abas (Tabs)
+   ========================================================================== */
+.ds-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--bg-surface);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  width: fit-content;
+  margin-bottom: 18px;
+}
+
+.ds-tab {
+  padding: 6px 14px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.ds-tab:hover {
+  color: var(--text-main);
+}
+
+.ds-tab.active {
+  background: #ffffff;
+  color: var(--text-main);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ==========================================================================
+   Alertas e Banners de Estado
+   ========================================================================== */
+.ds-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+  font-size: 0.885rem;
+  font-weight: 500;
+  animation: slide-in 0.2s ease;
+}
+
+.ds-alert-success {
+  background: var(--success-subtle);
+  border: 1px solid var(--success-border);
+  color: var(--success-text);
+}
+
+.ds-alert-danger {
+  background: var(--danger-subtle);
+  border: 1px solid var(--danger-border);
+  color: var(--danger-text);
+}
+
+.ds-alert-warning {
+  background: var(--warning-subtle);
+  border: 1px solid var(--warning-border);
+  color: var(--warning-text);
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   Modal do Design System
+   ========================================================================== */
+.ds-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 19, 32, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: fade-in 0.15s ease;
+}
+
+.ds-modal {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  width: 100%;
+  max-width: 520px;
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  animation: scale-up 0.15s ease;
+}
+
+.ds-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ds-modal-header h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.ds-modal-body {
+  padding: 24px;
+}
+
+.ds-modal-footer {
+  padding: 16px 24px;
+  background: var(--bg-app);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-up {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

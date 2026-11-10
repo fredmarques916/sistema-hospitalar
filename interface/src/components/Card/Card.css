@@ -1,22 +1,27 @@
-.card {
-  background-color: white;
-  padding: 22px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+.stat-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
 }
 
-.card span {
-  color: #6b7280;
-  font-size: 14px;
+.stat-mini-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-muted);
 }
 
-.card h2 {
-  margin: 10px 0;
-  font-size: 28px;
-  color: #173b57;
+.stat-danger {
+  border-left: 3px solid var(--danger);
 }
 
-.card p {
-  color: #6b7280;
-  font-size: 13px;
+.stat-success {
+  border-left: 3px solid var(--success);
+}
+
+.stat-primary {
+  border-left: 3px solid var(--primary);
 }
