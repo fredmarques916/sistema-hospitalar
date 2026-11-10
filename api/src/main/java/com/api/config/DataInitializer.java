@@ -5,6 +5,7 @@ import com.api.domain.model.Internacao;
 import com.api.domain.model.Paciente;
 import com.api.domain.model.ProfissionalSaude;
 import com.api.domain.model.Quarto;
+import com.api.domain.model.Usuario;
 import com.api.domain.model.enums.*;
 import com.api.domain.repository.*;
 import org.springframework.boot.CommandLineRunner;
@@ -24,8 +25,31 @@ public class DataInitializer {
             ProfissionalSaudeRepository profissionalRepo,
             QuartoRepository quartoRepo,
             InternacaoRepository internacaoRepo,
-            ConsultaRepository consultaRepo) {
+            ConsultaRepository consultaRepo,
+            UsuarioRepository usuarioRepo) {
         return args -> {
+            // Seed de Usuários (Login / Autenticação)
+            if (usuarioRepo.count() == 0) {
+                usuarioRepo.save(new Usuario(
+                        "Administrador do Sistema",
+                        "admin@hospital.com",
+                        PasswordUtils.hash("admin123"),
+                        "Administrador"
+                ));
+                usuarioRepo.save(new Usuario(
+                        "Dr. Carlos Eduardo",
+                        "medico@hospital.com",
+                        PasswordUtils.hash("medico123"),
+                        "Médico Clínico"
+                ));
+                usuarioRepo.save(new Usuario(
+                        "Mariana Santos",
+                        "recepcao@hospital.com",
+                        PasswordUtils.hash("recepcao123"),
+                        "Recepcionista"
+                ));
+            }
+
             if (pacienteRepo.count() > 0) {
                 return; // Já populado
             }

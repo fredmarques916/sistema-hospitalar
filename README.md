@@ -76,6 +76,8 @@ A API roda por padrão na porta `8080` com CORS liberado para o frontend (`http:
 
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
+| `POST` | `/auth/login` | Autentica usuário com e-mail e senha no SQLite |
+| `POST` | `/auth/cadastro` | Cadastra novo operador/médico com senha hasheada |
 | `GET` | `/pacientes` | Lista todos os pacientes |
 | `POST` | `/pacientes` | Cadastra novo paciente |
 | `GET` | `/profissionais` | Lista profissionais (suporta `?categoria=` e `?especialidade=`) |
