@@ -18,3 +18,4 @@ public record QuartoRequest(
     @NotNull(message = "O tipo do quarto é obrigatório (INDIVIDUAL, ENFERMARIA, UTI)")
     TipoQuarto tipoQuarto
 ) {}
+

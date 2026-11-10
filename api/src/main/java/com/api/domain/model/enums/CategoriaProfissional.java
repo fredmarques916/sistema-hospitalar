@@ -5,3 +5,4 @@ public enum CategoriaProfissional {
     ESPECIALISTA,
     CIRURGIAO
 }
+

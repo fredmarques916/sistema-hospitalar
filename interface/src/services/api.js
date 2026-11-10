@@ -145,3 +145,4 @@ export const api = {
       body: JSON.stringify({ observacoesAlta })
     })
 };
+

@@ -57,3 +57,4 @@ public class QuartoController {
         return ResponseEntity.noContent().build();
     }
 }
+

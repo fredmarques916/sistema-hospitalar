@@ -138,3 +138,4 @@ public class Quarto {
         this.situacao = situacao;
     }
 }
+

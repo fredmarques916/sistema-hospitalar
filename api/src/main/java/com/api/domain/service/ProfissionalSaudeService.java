@@ -90,3 +90,4 @@ public class ProfissionalSaudeService {
         profissionalRepository.delete(profissional);
     }
 }
+

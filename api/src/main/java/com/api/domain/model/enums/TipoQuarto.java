@@ -5,3 +5,4 @@ public enum TipoQuarto {
     ENFERMARIA,
     UTI
 }
+

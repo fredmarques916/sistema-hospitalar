@@ -6,3 +6,4 @@ public enum SituacaoProcedimento {
     CONCLUIDO,
     CANCELADO
 }
+

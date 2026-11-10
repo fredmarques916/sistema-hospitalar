@@ -13,3 +13,4 @@ public interface InternacaoRepository extends JpaRepository<Internacao, Long> {
     List<Internacao> findByQuartoId(Long quartoId);
     List<Internacao> findByProfissionalResponsavelId(Long profissionalId);
 }
+

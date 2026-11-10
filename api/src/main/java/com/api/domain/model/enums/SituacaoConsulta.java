@@ -8,3 +8,4 @@ public enum SituacaoConsulta {
     CANCELADA,
     NAO_COMPARECEU
 }
+

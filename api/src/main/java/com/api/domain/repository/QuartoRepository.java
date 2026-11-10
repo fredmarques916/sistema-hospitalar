@@ -16,3 +16,4 @@ public interface QuartoRepository extends JpaRepository<Quarto, Long> {
     List<Quarto> findBySituacao(SituacaoQuarto situacao);
     List<Quarto> findByTipoQuarto(TipoQuarto tipoQuarto);
 }
+

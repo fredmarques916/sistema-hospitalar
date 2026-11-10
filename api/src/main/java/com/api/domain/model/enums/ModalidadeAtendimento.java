@@ -6,3 +6,4 @@ public enum ModalidadeAtendimento {
     EMERGENCIA,
     PROCEDIMENTO_CIRURGICO
 }
+

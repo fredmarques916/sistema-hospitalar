@@ -17,3 +17,4 @@ public record InternacaoRequest(
     LocalDateTime dataPrevistaAlta,
     String observacoes
 ) {}
+

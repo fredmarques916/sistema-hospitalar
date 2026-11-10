@@ -20,3 +20,4 @@ public record PacienteRequest(
     String endereco,
     String email
 ) {}
+

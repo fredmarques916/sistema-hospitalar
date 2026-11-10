@@ -15,3 +15,4 @@ public interface ProfissionalSaudeRepository extends JpaRepository<ProfissionalS
     List<ProfissionalSaude> findByCategoria(CategoriaProfissional categoria);
     List<ProfissionalSaude> findByEspecialidadeIgnoreCase(String especialidade);
 }
+

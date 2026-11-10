@@ -5,3 +5,4 @@ public enum StatusEmergencia {
     EM_ANDAMENTO,
     CONCLUIDO
 }
+

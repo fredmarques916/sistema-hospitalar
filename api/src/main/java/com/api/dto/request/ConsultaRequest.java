@@ -42,3 +42,4 @@ public record ConsultaRequest(
     String observacoesPreOperatorias,
     String observacoesPosOperatorias
 ) {}
+

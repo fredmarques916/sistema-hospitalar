@@ -6,3 +6,4 @@ public enum PrioridadeEmergencia {
     ALTA,
     CRITICA
 }
+

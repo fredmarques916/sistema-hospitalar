@@ -153,3 +153,4 @@ class HospitalDomainRulesTests {
         assertEquals(SituacaoQuarto.DISPONIVEL, quartoIndividual.getSituacao());
     }
 }
+

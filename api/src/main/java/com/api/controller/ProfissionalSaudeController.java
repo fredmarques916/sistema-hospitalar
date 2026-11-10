@@ -51,3 +51,4 @@ public class ProfissionalSaudeController {
         return ResponseEntity.noContent().build();
     }
 }
+

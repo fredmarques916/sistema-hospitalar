@@ -141,3 +141,4 @@ public class ConsultaService {
         consultaRepository.delete(consulta);
     }
 }
+

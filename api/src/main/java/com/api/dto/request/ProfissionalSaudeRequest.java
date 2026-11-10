@@ -20,3 +20,4 @@ public record ProfissionalSaudeRequest(
     String especialidade,
     String atuacaoCirurgica
 ) {}
+

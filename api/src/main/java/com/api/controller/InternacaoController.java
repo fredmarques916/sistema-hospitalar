@@ -45,3 +45,4 @@ public class InternacaoController {
         return ResponseEntity.ok(internacaoService.registrarAlta(id, request));
     }
 }
+
