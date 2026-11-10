@@ -55,10 +55,14 @@ Este projeto é uma solução full-stack para gestão de atendimentos, internaç
   - **Regra de Ouro**: *Não é permitido registrar um procedimento cirúrgico como concluído se ele não tiver sido iniciado.*
 
 ### 3. Ciclo de Vida e Situação das Consultas
-As consultas possuem transições de estado estritas:
-`AGENDADA` ➔ `CONFIRMADA` ➔ `EM_ATENDIMENTO` ➔ `CONCLUIDA`
-- Consultas também podem assumir `CANCELADA` ou `NAO_COMPARECEU`.
+As consultas possuem transições de estado controladas:
+- `AGENDADA` pode ser confirmada ou iniciar atendimento.
+- `CONFIRMADA` pode iniciar atendimento ou registrar cancelamento/não comparecimento.
+- `EM_ATENDIMENTO` pode ser concluída ou cancelada.
+- Consultas também podem assumir `CANCELADA` ou `NAO_COMPARECEU`, estados que não podem ser reativados; um novo atendimento exige um novo agendamento.
 - **Incompatibilidades bloqueadas**:
+  - Uma consulta não pode ser concluída antes de iniciar o atendimento.
+  - Uma consulta em atendimento não pode voltar para `CONFIRMADA`.
   - Uma consulta `CONCLUIDA` nunca pode voltar para `AGENDADA`.
   - Uma consulta `CANCELADA` não pode ser marcada como `CONCLUIDA` sem um novo agendamento.
 
@@ -84,7 +88,7 @@ A API roda por padrão na porta `8080` com CORS liberado para o frontend (`http:
 | `POST` | `/profissionais` | Cadastra novo profissional |
 | `GET` | `/consultas` | Lista consultas (suporta `?situacao=`, `?modalidade=`, `?pacienteId=`) |
 | `POST` | `/consultas` | Agenda consulta/atendimento em qualquer modalidade |
-| `PATCH` | `/consultas/{id}/situacao` | Atualiza situação (`CONFIRMADA`, `EM_ATENDIMENTO`, `CONCLUIDA`, `CANCELADA`) |
+| `PATCH` | `/consultas/{id}/situacao` | Atualiza situação (`CONFIRMADA`, `EM_ATENDIMENTO`, `CONCLUIDA`, `CANCELADA`, `NAO_COMPARECEU`) |
 | `GET` | `/quartos` | Lista quartos e status de ocupação |
 | `POST` | `/quartos` | Cria novo quarto hospitalar |
 | `PATCH` | `/quartos/{id}/situacao` | Altera status (ex: colocar em manutenção) |
