@@ -29,6 +29,18 @@
   border: 1px solid var(--primary-border);
 }
 
+.plantao-tag.tag-admin {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.plantao-tag.tag-medico {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
 .data-hoje {
   font-size: 0.85rem;
   color: var(--text-muted);

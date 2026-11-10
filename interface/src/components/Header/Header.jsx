@@ -37,11 +37,15 @@ function Header() {
   const nomeExibicao = usuario?.nome || "Equipe Médica & Triagem";
   const cargoExibicao = usuario?.cargo || "Operador Autorizado";
   const iniciais = getIniciais(nomeExibicao);
+  const isAdmin = usuario?.cargo === "Administrador";
+  const isMedico = usuario?.cargo === "Médico Clínico";
+  const tagClass = isAdmin ? "plantao-tag tag-admin" : isMedico ? "plantao-tag tag-medico" : "plantao-tag";
+  const tagTexto = isAdmin ? "🛡️ Gestão & Governança" : isMedico ? "🩺 Plantão Clínico Assistencial" : "Turno Diurno";
 
   return (
     <header className="header">
       <div className="header-context">
-        <span className="plantao-tag">Turno Clínico Diurno</span>
+        <span className={tagClass}>{tagTexto}</span>
         <span className="data-hoje">{dataAtual}</span>
       </div>
 
