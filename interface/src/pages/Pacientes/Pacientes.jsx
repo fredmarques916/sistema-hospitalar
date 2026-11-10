@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
+import { formatCPF, formatTelefone, formatData } from "../../utils/formatters";
 
 function Pacientes() {
   const [pacientes, setPacientes] = useState([]);
@@ -50,7 +51,7 @@ function Pacientes() {
 
     try {
       const novo = await api.createPaciente(payload);
-      setMensagemSucesso(`Paciente ${novo.nome} cadastrado com sucesso no SQLite!`);
+      setMensagemSucesso(`Paciente ${novo.nome} cadastrado com sucesso.`);
       setPacientes([novo, ...pacientes]);
       setNome("");
       setCpf("");
@@ -64,12 +65,12 @@ function Pacientes() {
   }
 
   async function handleExcluir(id, nomePaciente) {
-    if (!window.confirm(`Tem certeza que deseja remover o cadastro de ${nomePaciente}?`)) return;
+    if (!window.confirm(`Deseja remover o cadastro do paciente "${nomePaciente}"?`)) return;
     setMensagemSucesso("");
     setMensagemErro("");
     try {
       await api.deletePaciente(id);
-      setMensagemSucesso(`Paciente ${nomePaciente} removido.`);
+      setMensagemSucesso(`Cadastro de ${nomePaciente} removido com sucesso.`);
       setPacientes(pacientes.filter((p) => p.id !== id));
     } catch (err) {
       setMensagemErro(err.message);
@@ -193,7 +194,7 @@ function Pacientes() {
 
         {carregando ? (
           <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
-            Buscando pacientes no SQLite...
+            Carregando pacientes...
           </div>
         ) : (
           <div className="ds-table-container">
@@ -223,14 +224,14 @@ function Pacientes() {
                       </td>
                       <td>
                         <code className="tabular-nums" style={{ color: "var(--text-muted)" }}>
-                          {p.cpf}
+                          {formatCPF(p.cpf)}
                         </code>
                       </td>
                       <td>
-                        <span className="tabular-nums">{p.dataNascimento}</span>
+                        <span className="tabular-nums">{formatData(p.dataNascimento)}</span>
                       </td>
                       <td>
-                        <div>{p.telefone || "Sem telefone"}</div>
+                        <div>{formatTelefone(p.telefone)}</div>
                         <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{p.email}</div>
                       </td>
                       <td>{p.endereco || "Não informado"}</td>

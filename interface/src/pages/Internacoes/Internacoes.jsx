@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
+import {
+  formatTipoQuarto,
+  formatCategoriaProfissional,
+  formatCPF,
+  formatDataHora
+} from "../../utils/formatters";
 
 function Internacoes() {
   const [internacoes, setInternacoes] = useState([]);
@@ -69,7 +75,7 @@ function Internacoes() {
 
     try {
       const nova = await api.createInternacao(payload);
-      setMensagemSucesso(`Internação de ${nova.paciente?.nome} no Quarto ${nova.quarto?.numeroIdentificacao} confirmada no SQLite!`);
+      setMensagemSucesso(`Internação de ${nova.paciente?.nome} no Quarto ${nova.quarto?.numeroIdentificacao} registrada com sucesso.`);
       carregarDados();
       setPacienteId("");
       setProfissionalId("");
@@ -94,7 +100,7 @@ function Internacoes() {
 
     try {
       await api.registrarAlta(internacaoSelecionada.id, observacoesAlta);
-      setMensagemSucesso(`Alta hospitalar de ${internacaoSelecionada.paciente?.nome} registrada com sucesso. Leito liberado.`);
+      setMensagemSucesso(`Alta médica de ${internacaoSelecionada.paciente?.nome} confirmada com sucesso. Leito liberado.`);
       setModalAltaAberto(false);
       carregarDados();
     } catch (err) {
@@ -150,7 +156,7 @@ function Internacoes() {
                 <option value="">Selecione o médico</option>
                 {profissionais.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.nome} — {p.categoria}
+                    {p.nome} — {formatCategoriaProfissional(p.categoria)}
                   </option>
                 ))}
               </select>
@@ -167,7 +173,7 @@ function Internacoes() {
                 <option value="">Selecione um quarto disponível</option>
                 {quartosDisponiveis.map((q) => (
                   <option key={q.id} value={q.id}>
-                    Quarto {q.numeroIdentificacao} ({q.tipoQuarto} &bull; Andar {q.andar} &bull; {q.quantidadeOcupantes}/{q.capacidadeMaxima} leitos)
+                    Quarto {q.numeroIdentificacao} ({formatTipoQuarto(q.tipoQuarto)} &bull; Andar {q.andar} &bull; {q.quantidadeOcupantes}/{q.capacidadeMaxima} leitos)
                   </option>
                 ))}
               </select>
@@ -236,7 +242,7 @@ function Internacoes() {
 
         {carregando ? (
           <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
-            Buscando internações no SQLite...
+            Carregando internações...
           </div>
         ) : (
           <div className="ds-table-container">
@@ -265,28 +271,28 @@ function Internacoes() {
                       <td>
                         <strong>{i.paciente?.nome}</strong>
                         <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                          CPF: {i.paciente?.cpf}
+                          CPF: {formatCPF(i.paciente?.cpf)}
                         </div>
                       </td>
                       <td>{i.profissionalResponsavel?.nome}</td>
                       <td>
                         <span className="ds-badge" style={{ background: "#f1f5f9", color: "#334155" }}>
-                          Quarto {i.quarto?.numeroIdentificacao} ({i.quarto?.tipoQuarto})
+                          Quarto {i.quarto?.numeroIdentificacao} ({formatTipoQuarto(i.quarto?.tipoQuarto)})
                         </span>
                       </td>
                       <td>
                         <span className="tabular-nums">
-                          {new Date(i.dataEntrada).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                          {formatDataHora(i.dataEntrada)}
                         </span>
                       </td>
                       <td>
                         {i.dataEfetivaAlta ? (
                           <span style={{ color: "var(--success)" }}>
-                            Alta: {new Date(i.dataEfetivaAlta).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                            Alta: {formatDataHora(i.dataEfetivaAlta)}
                           </span>
                         ) : i.dataPrevistaAlta ? (
                           <span className="tabular-nums">
-                            {new Date(i.dataPrevistaAlta).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                            {formatDataHora(i.dataPrevistaAlta)}
                           </span>
                         ) : (
                           <span style={{ color: "var(--text-muted)" }}>Acompanhamento</span>

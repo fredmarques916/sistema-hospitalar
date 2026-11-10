@@ -1,5 +1,16 @@
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
+import {
+  formatSituacaoConsulta,
+  formatModalidade,
+  formatTipoQuarto,
+  formatCategoriaProfissional,
+  formatCPF,
+  formatTelefone,
+  formatData,
+  formatHorario,
+  formatDataHora
+} from "../../utils/formatters";
 
 function Historico() {
   const [pacientes, setPacientes] = useState([]);
@@ -71,7 +82,7 @@ function Historico() {
             >
               {pacientes.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.nome} (CPF: {p.cpf})
+                  {p.nome} (CPF: {formatCPF(p.cpf)})
                 </option>
               ))}
             </select>
@@ -94,9 +105,9 @@ function Historico() {
                 {pacienteAtual.nome}
               </h2>
               <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                CPF: <strong className="tabular-nums">{pacienteAtual.cpf}</strong> &bull; Nasc:{" "}
-                <span className="tabular-nums">{pacienteAtual.dataNascimento}</span> &bull; Telefone:{" "}
-                {pacienteAtual.telefone || "N/A"}
+                CPF: <strong className="tabular-nums">{formatCPF(pacienteAtual.cpf)}</strong> &bull; Nasc:{" "}
+                <span className="tabular-nums">{formatData(pacienteAtual.dataNascimento)}</span> &bull; Telefone:{" "}
+                {formatTelefone(pacienteAtual.telefone)}
               </div>
             </div>
             <span className="ds-badge" style={{ background: "var(--primary-subtle)", color: "var(--primary)" }}>
@@ -110,7 +121,7 @@ function Historico() {
 
           {consultasPaciente.length === 0 && internacoesPaciente.length === 0 ? (
             <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
-              Nenhum registro de consulta ou internação cadastrado para este paciente no SQLite.
+              Nenhum registro de atendimento ou internação cadastrado para este paciente.
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -131,10 +142,10 @@ function Historico() {
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                       <span style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--primary)" }}>
-                        ATENDIMENTO: {c.modalidade}
+                        {formatModalidade(c.modalidade)}
                       </span>
                       <span className={`ds-badge ${situacaoBadge}`}>
-                        {c.situacao}
+                        {formatSituacaoConsulta(c.situacao)}
                       </span>
                     </div>
 
@@ -143,7 +154,7 @@ function Historico() {
                     </h4>
 
                     <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                      📅 {c.dataConsulta} às {c.horario} &bull; Médico: <strong>{c.profissional?.nome}</strong> ({c.profissional?.categoria})
+                      📅 {formatData(c.dataConsulta)} às {formatHorario(c.horario)} &bull; Médico: <strong>{c.profissional?.nome}</strong> ({formatCategoriaProfissional(c.profissional?.categoria)})
                     </div>
 
                     {c.especialidadeRequerida && (
@@ -196,20 +207,20 @@ function Historico() {
                   </div>
 
                   <h4 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-main)" }}>
-                    Quarto {i.quarto?.numeroIdentificacao} ({i.quarto?.tipoQuarto} &bull; Andar {i.quarto?.andar})
+                    Quarto {i.quarto?.numeroIdentificacao} ({formatTipoQuarto(i.quarto?.tipoQuarto)} &bull; Andar {i.quarto?.andar})
                   </h4>
 
                   <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                    Entrada: {new Date(i.dataEntrada).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })} &bull; Médico Responsável: <strong>{i.profissionalResponsavel?.nome}</strong>
+                    Entrada: {formatDataHora(i.dataEntrada)} &bull; Médico Responsável: <strong>{i.profissionalResponsavel?.nome}</strong>
                   </div>
 
                   {i.dataEfetivaAlta ? (
                     <div style={{ fontSize: "0.825rem", color: "var(--success-text)", marginTop: "4px" }}>
-                      ✅ Alta registrada em: {new Date(i.dataEfetivaAlta).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                      ✅ Alta registrada em: {formatDataHora(i.dataEfetivaAlta)}
                     </div>
                   ) : (
                     <div style={{ fontSize: "0.825rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                      Previsão de alta: {i.dataPrevistaAlta ? new Date(i.dataPrevistaAlta).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "Acompanhamento em curso"}
+                      Previsão de alta: {i.dataPrevistaAlta ? formatDataHora(i.dataPrevistaAlta) : "Acompanhamento em curso"}
                     </div>
                   )}
 

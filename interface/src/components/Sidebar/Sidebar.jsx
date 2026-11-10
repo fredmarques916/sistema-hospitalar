@@ -107,9 +107,9 @@ function Sidebar() {
       <div className="sidebar-footer">
         <div className={`status-pill ${online ? "online" : "offline"}`}>
           <span className="status-dot"></span>
-          <span>{online ? "API & SQLite Online" : "Servidor Offline"}</span>
+          <span>{online ? "Sistema Operacional" : "Conexão Indisponível"}</span>
         </div>
-        <div className="db-info">Base: hospital.db</div>
+        <div className="unit-info">Unidade Central Hospitalar</div>
       </div>
     </aside>
   );

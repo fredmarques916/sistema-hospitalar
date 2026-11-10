@@ -146,9 +146,9 @@
   animation: pulse-dot 2s infinite;
 }
 
-.db-info {
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  color: #64748b;
+.unit-info {
+  font-size: 0.72rem;
+  color: #94a3b8;
   padding-left: 4px;
+  letter-spacing: 0.01em;
 }

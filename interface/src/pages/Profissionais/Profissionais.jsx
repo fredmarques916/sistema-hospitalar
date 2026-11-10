@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
+import { formatCategoriaProfissional, formatTelefone } from "../../utils/formatters";
 
 function Profissionais() {
   const [profissionais, setProfissionais] = useState([]);
@@ -55,7 +56,7 @@ function Profissionais() {
 
     try {
       const novo = await api.createProfissional(payload);
-      setMensagemSucesso(`Profissional ${novo.nome} (${novo.categoria}) cadastrado com sucesso no SQLite!`);
+      setMensagemSucesso(`Profissional ${novo.nome} (${formatCategoriaProfissional(novo.categoria)}) cadastrado com sucesso.`);
       setProfissionais([novo, ...profissionais]);
       setNome("");
       setRegistroProfissional("");
@@ -69,7 +70,7 @@ function Profissionais() {
   }
 
   async function handleExcluir(id, nomeProfissional) {
-    if (!window.confirm(`Tem certeza que deseja remover ${nomeProfissional} do corpo clínico?`)) return;
+    if (!window.confirm(`Deseja realmente remover ${nomeProfissional} do corpo clínico?`)) return;
     setMensagemSucesso("");
     setMensagemErro("");
     try {
@@ -284,11 +285,7 @@ function Profissionais() {
                         </td>
                         <td>
                           <span className={`ds-badge ${badgeClass}`}>
-                            {p.categoria === "CLINICO_GERAL"
-                              ? "Clínico Geral"
-                              : p.categoria === "ESPECIALISTA"
-                              ? "Especialista"
-                              : "Cirurgião"}
+                            {formatCategoriaProfissional(p.categoria)}
                           </span>
                         </td>
                         <td>
@@ -299,7 +296,7 @@ function Profissionais() {
                           )}
                         </td>
                         <td>
-                          <div>{p.telefone || "Não informado"}</div>
+                          <div>{formatTelefone(p.telefone)}</div>
                           <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{p.email}</div>
                         </td>
                         <td>

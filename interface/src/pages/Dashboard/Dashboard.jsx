@@ -2,6 +2,14 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Card from "../../components/Card/Card";
 import { api } from "../../services/api";
+import {
+  formatCategoriaProfissional,
+  formatModalidade,
+  formatPrioridadeEmergencia,
+  formatSituacaoConsulta,
+  formatData,
+  formatHorario
+} from "../../utils/formatters";
 import "./Dashboard.css";
 
 function Dashboard() {
@@ -51,7 +59,7 @@ function Dashboard() {
       <div className="ds-page-header">
         <div className="ds-page-title">
           <h1>Painel de Controle Hospitalar</h1>
-          <p>Visão executiva em tempo real com dados persistidos em SQLite (hospital.db)</p>
+          <p>Visão geral dos atendimentos, leitos e pacientes em tempo real</p>
         </div>
         <div>
           <Link to="/dashboard/consultas" className="ds-btn ds-btn-primary">
@@ -62,7 +70,7 @@ function Dashboard() {
 
       {erroConexao && (
         <div className="ds-alert ds-alert-danger">
-          <strong>Aviso de Conexão:</strong> {erroConexao}
+          <strong>Aviso de Comunicação:</strong> Não foi possível sincronizar os dados da unidade. Verifique se a aplicação está ativa.
         </div>
       )}
 
@@ -87,7 +95,7 @@ function Dashboard() {
         <Card
           titulo="Pacientes"
           valor={pacientes.length.toString()}
-          descricao="Cadastros em banco de dados"
+          descricao="Pacientes cadastrados na unidade"
           variante="primary"
         />
 
@@ -127,7 +135,7 @@ function Dashboard() {
 
         {carregando ? (
           <div style={{ padding: "30px", textAlign: "center", color: "var(--text-muted)" }}>
-            Carregando dados da API...
+            Carregando atendimentos...
           </div>
         ) : (
           <div className="ds-table-container">
@@ -145,7 +153,7 @@ function Dashboard() {
                 {consultas.length === 0 ? (
                   <tr>
                     <td colSpan="5" style={{ textAlign: "center", padding: "30px", color: "var(--text-muted)" }}>
-                      Nenhum atendimento registrado no banco de dados.
+                      Nenhum atendimento registrado no momento.
                     </td>
                   </tr>
                 ) : (
@@ -160,25 +168,25 @@ function Dashboard() {
                         <td>
                           <div>{c.profissional?.nome}</div>
                           <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                            {c.profissional?.categoria} {c.especialidadeRequerida ? `(${c.especialidadeRequerida})` : ""}
+                            {formatCategoriaProfissional(c.profissional?.categoria)} {c.especialidadeRequerida ? `(${c.especialidadeRequerida})` : ""}
                           </div>
                         </td>
                         <td>
                           <span className="ds-badge" style={{ background: "#f1f5f9", color: "#334155" }}>
-                            {c.modalidade}
+                            {formatModalidade(c.modalidade)}
                           </span>
                           {c.prioridadeEmergencia && (
                             <span className="ds-badge" style={{ marginLeft: "6px", background: "#fee2e2", color: "#dc2626" }}>
-                              {c.prioridadeEmergencia}
+                              {formatPrioridadeEmergencia(c.prioridadeEmergencia)}
                             </span>
                           )}
                         </td>
                         <td>
-                          <span className="tabular-nums">{c.dataConsulta}</span> às <span className="tabular-nums">{c.horario}</span>
+                          <span className="tabular-nums">{formatData(c.dataConsulta)}</span> às <span className="tabular-nums">{formatHorario(c.horario)}</span>
                         </td>
                         <td>
                           <span className={`ds-badge ${badgeClass}`}>
-                            {c.situacao}
+                            {formatSituacaoConsulta(c.situacao)}
                           </span>
                         </td>
                       </tr>

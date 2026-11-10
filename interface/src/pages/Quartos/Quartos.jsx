@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
+import { formatTipoQuarto, formatSituacaoQuarto } from "../../utils/formatters";
 
 function Quartos() {
   const [quartos, setQuartos] = useState([]);
@@ -48,7 +49,7 @@ function Quartos() {
 
     try {
       const novo = await api.createQuarto(payload);
-      setMensagemSucesso(`Quarto #${novo.numeroIdentificacao} cadastrado com sucesso no SQLite!`);
+      setMensagemSucesso(`Quarto #${novo.numeroIdentificacao} cadastrado com sucesso.`);
       setQuartos([...quartos, novo]);
       setNumeroIdentificacao("");
     } catch (err) {
@@ -62,7 +63,7 @@ function Quartos() {
     const novaSituacao = situacaoAtual === "MANUTENCAO" ? "DISPONIVEL" : "MANUTENCAO";
     try {
       await api.patchQuartoSituacao(id, novaSituacao);
-      setMensagemSucesso(`Situação do quarto atualizada para ${novaSituacao}.`);
+      setMensagemSucesso(`Situação do quarto atualizada para "${formatSituacaoQuarto(novaSituacao)}".`);
       carregarQuartos();
     } catch (err) {
       setMensagemErro(err.message);
@@ -201,7 +202,7 @@ function Quartos() {
 
         {carregando ? (
           <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
-            Buscando leitos no SQLite...
+            Carregando leitos...
           </div>
         ) : (
           <div
@@ -243,7 +244,7 @@ function Quartos() {
                           Quarto {q.numeroIdentificacao}
                         </h3>
                         <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                          {q.andar}º Andar &bull; {q.tipoQuarto}
+                          {q.andar}º Andar &bull; {formatTipoQuarto(q.tipoQuarto)}
                         </div>
                       </div>
                       <span
@@ -263,7 +264,7 @@ function Quartos() {
                               : "#64748b"
                         }}
                       >
-                        {q.situacao}
+                        {formatSituacaoQuarto(q.situacao)}
                       </span>
                     </div>
 

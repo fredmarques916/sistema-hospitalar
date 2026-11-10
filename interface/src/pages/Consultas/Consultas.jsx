@@ -1,5 +1,15 @@
 import { useState, useEffect } from "react";
 import { api } from "../../services/api";
+import {
+  formatSituacaoConsulta,
+  formatModalidade,
+  formatPrioridadeEmergencia,
+  formatSituacaoProcedimento,
+  formatCategoriaProfissional,
+  formatCPF,
+  formatData,
+  formatHorario
+} from "../../utils/formatters";
 
 function Consultas() {
   const [consultas, setConsultas] = useState([]);
@@ -89,7 +99,7 @@ function Consultas() {
 
     try {
       const nova = await api.createConsulta(payload);
-      setMensagemSucesso(`Atendimento #${nova.id} (${nova.modalidade}) agendado com sucesso no SQLite!`);
+      setMensagemSucesso(`Atendimento para ${nova.paciente?.nome || "paciente"} agendado com sucesso.`);
       setConsultas([nova, ...consultas]);
       setMotivo("");
       setObservacoes("");
@@ -118,7 +128,7 @@ function Consultas() {
         acaoModal,
         observacoesModal
       );
-      setMensagemSucesso(`Situação da consulta #${atualizada.id} atualizada para ${acaoModal}!`);
+      setMensagemSucesso(`Situação do atendimento atualizada para "${formatSituacaoConsulta(acaoModal)}" com sucesso.`);
       setConsultas(consultas.map((c) => (c.id === atualizada.id ? atualizada : c)));
       setModalAberto(false);
     } catch (err) {
@@ -132,7 +142,7 @@ function Consultas() {
     setMensagemErro("");
     try {
       const atualizada = await api.patchConsultaSituacao(id, novaSituacao);
-      setMensagemSucesso(`Situação atualizada para ${novaSituacao} com sucesso!`);
+      setMensagemSucesso(`Situação atualizada para "${formatSituacaoConsulta(novaSituacao)}" com sucesso.`);
       setConsultas(consultas.map((c) => (c.id === id ? atualizada : c)));
     } catch (err) {
       setMensagemErro(err.message);
@@ -140,12 +150,12 @@ function Consultas() {
   }
 
   async function handleExcluir(id) {
-    if (!window.confirm(`Tem certeza que deseja excluir a consulta #${id} do banco de dados?`)) return;
+    if (!window.confirm("Deseja realmente remover este atendimento do sistema?")) return;
     setMensagemSucesso("");
     setMensagemErro("");
     try {
       await api.deleteConsulta(id);
-      setMensagemSucesso(`Consulta #${id} excluída com sucesso.`);
+      setMensagemSucesso("Atendimento removido com sucesso.");
       setConsultas(consultas.filter((c) => c.id !== id));
     } catch (err) {
       setMensagemErro(err.message);
@@ -206,7 +216,7 @@ function Consultas() {
                 <option value="">Selecione o paciente</option>
                 {pacientes.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.nome} (CPF: {p.cpf})
+                    {p.nome} (CPF: {formatCPF(p.cpf)})
                   </option>
                 ))}
               </select>
@@ -215,7 +225,7 @@ function Consultas() {
             <div className="ds-field">
               <label className="ds-label">
                 Profissional Responsável *
-                {modalidade === "PROCEDIMENTO_CIRURGICO" && " [Exclusivo Cirurgiões]"}
+                {modalidade === "PROCEDIMENTO_CIRURGICO" && " [Cirurgiões]"}
                 {modalidade === "ESPECIALIZADA" && " [Especialistas]"}
               </label>
               <select
@@ -227,7 +237,7 @@ function Consultas() {
                 <option value="">Selecione o médico responsável</option>
                 {profissionaisDisponiveis.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.nome} — {p.categoria} {p.especialidade ? `(${p.especialidade})` : ""}
+                    {p.nome} — {formatCategoriaProfissional(p.categoria)} {p.especialidade ? `(${p.especialidade})` : ""}
                   </option>
                 ))}
               </select>
@@ -396,7 +406,7 @@ function Consultas() {
 
         {carregando ? (
           <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
-            Buscando atendimentos no SQLite...
+            Carregando atendimentos...
           </div>
         ) : (
           <div className="ds-table-container">
@@ -430,12 +440,12 @@ function Consultas() {
                         <td>
                           <div>{c.profissional?.nome}</div>
                           <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                            {c.profissional?.categoria} {c.profissional?.especialidade ? `• ${c.profissional.especialidade}` : ""}
+                            {formatCategoriaProfissional(c.profissional?.categoria)} {c.profissional?.especialidade ? `• ${c.profissional.especialidade}` : ""}
                           </div>
                         </td>
                         <td>
                           <span className="ds-badge" style={{ background: "#f1f5f9", color: "#334155" }}>
-                            {c.modalidade}
+                            {formatModalidade(c.modalidade)}
                           </span>
                           {c.prioridadeEmergencia && (
                             <div style={{ marginTop: "4px" }}>
@@ -443,23 +453,23 @@ function Consultas() {
                                 background: c.prioridadeEmergencia === "CRITICA" ? "#fee2e2" : "#fffbeb",
                                 color: c.prioridadeEmergencia === "CRITICA" ? "#dc2626" : "#b45309"
                               }}>
-                                Prioridade: {c.prioridadeEmergencia}
+                                Prioridade: {formatPrioridadeEmergencia(c.prioridadeEmergencia)}
                               </span>
                             </div>
                           )}
                           {c.tipoCirurgia && (
                             <div style={{ fontSize: "0.75rem", color: "var(--surgery-text)", marginTop: "2px" }}>
                               Cirurgia: <strong>{c.tipoCirurgia}</strong>
-                              {c.situacaoProcedimento && ` [${c.situacaoProcedimento}]`}
+                              {c.situacaoProcedimento && ` • ${formatSituacaoProcedimento(c.situacaoProcedimento)}`}
                             </div>
                           )}
                         </td>
                         <td>
-                          <span className="tabular-nums">{c.dataConsulta}</span> às <span className="tabular-nums">{c.horario}</span>
+                          <span className="tabular-nums">{formatData(c.dataConsulta)}</span> às <span className="tabular-nums">{formatHorario(c.horario)}</span>
                         </td>
                         <td>
                           <span className={`ds-badge ${situacaoBadge}`}>
-                            {c.situacao}
+                            {formatSituacaoConsulta(c.situacao)}
                           </span>
                         </td>
                         <td>
@@ -503,7 +513,7 @@ function Consultas() {
                               <button
                                 className="ds-btn ds-btn-sm"
                                 style={{ background: "transparent", color: "var(--text-dim)", border: "none" }}
-                                title="Excluir do banco"
+                                title="Excluir atendimento"
                                 onClick={() => handleExcluir(c.id)}
                               >
                                 ✕
@@ -539,7 +549,7 @@ function Consultas() {
             <div className="ds-modal-body">
               <p style={{ fontSize: "0.885rem", color: "var(--text-muted)", marginBottom: "16px" }}>
                 Paciente: <strong>{consultaSelecionada?.paciente?.nome}</strong> &bull; Modalidade:{" "}
-                <strong>{consultaSelecionada?.modalidade}</strong>
+                <strong>{formatModalidade(consultaSelecionada?.modalidade)}</strong>
               </p>
 
               <div className="ds-field">
