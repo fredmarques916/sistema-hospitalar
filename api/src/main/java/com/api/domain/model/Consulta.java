@@ -121,21 +121,15 @@ public class Consulta {
     }
 
     public void confirmar() {
-        if (situacao == SituacaoConsulta.CONCLUIDA) {
-            throw new BusinessRuleException("Não é possível alterar a situação de uma consulta já concluída.");
-        }
-        if (situacao == SituacaoConsulta.CANCELADA) {
-            throw new BusinessRuleException("Não é possível confirmar uma consulta cancelada.");
+        if (situacao != SituacaoConsulta.AGENDADA) {
+            throw new BusinessRuleException("Somente uma consulta agendada pode ser confirmada.");
         }
         this.situacao = SituacaoConsulta.CONFIRMADA;
     }
 
     public void iniciarAtendimento() {
-        if (situacao == SituacaoConsulta.CONCLUIDA) {
-            throw new BusinessRuleException("A consulta já foi concluída.");
-        }
-        if (situacao == SituacaoConsulta.CANCELADA) {
-            throw new BusinessRuleException("Não é possível iniciar atendimento de uma consulta cancelada.");
+        if (situacao != SituacaoConsulta.AGENDADA && situacao != SituacaoConsulta.CONFIRMADA) {
+            throw new BusinessRuleException("Somente uma consulta agendada ou confirmada pode iniciar atendimento.");
         }
         this.situacao = SituacaoConsulta.EM_ATENDIMENTO;
 
@@ -159,6 +153,11 @@ public class Consulta {
             if (this.situacaoProcedimento != SituacaoProcedimento.EM_ANDAMENTO) {
                 throw new BusinessRuleException("Não será permitido registrar um procedimento como concluído se ele não tiver sido iniciado.");
             }
+        }
+        if (situacao != SituacaoConsulta.EM_ATENDIMENTO) {
+            throw new BusinessRuleException("Somente uma consulta em atendimento pode ser concluída.");
+        }
+        if (modalidade == ModalidadeAtendimento.PROCEDIMENTO_CIRURGICO) {
             this.situacaoProcedimento = SituacaoProcedimento.CONCLUIDO;
             if (this.dataHoraEfetiva == null) {
                 this.dataHoraEfetiva = LocalDateTime.now();
@@ -177,6 +176,11 @@ public class Consulta {
         if (situacao == SituacaoConsulta.CONCLUIDA) {
             throw new BusinessRuleException("Uma consulta já concluída não pode ser cancelada nem voltar para agendada.");
         }
+        if (situacao != SituacaoConsulta.AGENDADA
+                && situacao != SituacaoConsulta.CONFIRMADA
+                && situacao != SituacaoConsulta.EM_ATENDIMENTO) {
+            throw new BusinessRuleException("Somente uma consulta agendada, confirmada ou em atendimento pode ser cancelada.");
+        }
         if (modalidade == ModalidadeAtendimento.PROCEDIMENTO_CIRURGICO && situacaoProcedimento == SituacaoProcedimento.CONCLUIDO) {
             throw new BusinessRuleException("Procedimento cirúrgico concluído não pode ser cancelado.");
         }
@@ -190,11 +194,8 @@ public class Consulta {
     }
 
     public void registrarNaoCompareceu() {
-        if (situacao == SituacaoConsulta.CONCLUIDA) {
-            throw new BusinessRuleException("Não é possível registrar não comparecimento em consulta já concluída.");
-        }
-        if (situacao == SituacaoConsulta.CANCELADA) {
-            throw new BusinessRuleException("A consulta está cancelada.");
+        if (situacao != SituacaoConsulta.AGENDADA && situacao != SituacaoConsulta.CONFIRMADA) {
+            throw new BusinessRuleException("Não comparecimento só pode ser registrado para consultas agendadas ou confirmadas.");
         }
         this.situacao = SituacaoConsulta.NAO_COMPARECEU;
     }

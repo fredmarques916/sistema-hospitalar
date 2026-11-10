@@ -125,6 +125,34 @@ class HospitalDomainRulesTests {
         consulta.cancelar("Paciente cancelou por telefone");
 
         assertThrows(BusinessRuleException.class, () -> consulta.concluir("Finalizando"));
+        assertThrows(BusinessRuleException.class, consulta::confirmar);
+        assertThrows(BusinessRuleException.class, consulta::iniciarAtendimento);
+    }
+
+    @Test
+    @DisplayName("Consulta agendada não pode ser concluída antes do início do atendimento")
+    void consultaAgendadaNaoPodeSerConcluidaSemIniciar() {
+        Consulta consulta = new Consulta(paciente, clinico, LocalDate.now(), LocalTime.of(14, 0), "Consulta de rotina", ModalidadeAtendimento.ROTINA);
+
+        assertThrows(BusinessRuleException.class, () -> consulta.concluir("Finalizando"));
+    }
+
+    @Test
+    @DisplayName("Consulta em atendimento não pode voltar para confirmada")
+    void consultaEmAtendimentoNaoPodeVoltarParaConfirmada() {
+        Consulta consulta = new Consulta(paciente, clinico, LocalDate.now(), LocalTime.of(14, 0), "Consulta de rotina", ModalidadeAtendimento.ROTINA);
+        consulta.iniciarAtendimento();
+
+        assertThrows(BusinessRuleException.class, consulta::confirmar);
+    }
+
+    @Test
+    @DisplayName("Não comparecimento só pode ser registrado antes do início do atendimento")
+    void naoComparecimentoNaoPodeSerRegistradoDuranteAtendimento() {
+        Consulta consulta = new Consulta(paciente, clinico, LocalDate.now(), LocalTime.of(14, 0), "Consulta de rotina", ModalidadeAtendimento.ROTINA);
+        consulta.iniciarAtendimento();
+
+        assertThrows(BusinessRuleException.class, consulta::registrarNaoCompareceu);
     }
 
     @Test
@@ -153,4 +181,3 @@ class HospitalDomainRulesTests {
         assertEquals(SituacaoQuarto.DISPONIVEL, quartoIndividual.getSituacao());
     }
 }
-

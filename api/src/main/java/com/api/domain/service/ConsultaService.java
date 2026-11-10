@@ -115,10 +115,9 @@ public class ConsultaService {
             case CANCELADA -> consulta.cancelar(request.observacoes());
             case NAO_COMPARECEU -> consulta.registrarNaoCompareceu();
             case AGENDADA -> {
-                if (consulta.getSituacao() == SituacaoConsulta.CONCLUIDA) {
-                    throw new BusinessRuleException("Uma consulta já concluída não pode voltar a ser considerada agendada.");
+                if (consulta.getSituacao() != SituacaoConsulta.AGENDADA) {
+                    throw new BusinessRuleException("Uma consulta não pode ser reativada. Para um novo atendimento, crie um novo agendamento.");
                 }
-                consulta.setSituacao(SituacaoConsulta.AGENDADA);
             }
         }
 
@@ -141,4 +140,3 @@ public class ConsultaService {
         consultaRepository.delete(consulta);
     }
 }
-
