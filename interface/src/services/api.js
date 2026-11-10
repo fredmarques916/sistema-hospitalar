@@ -165,4 +165,32 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ observacoesAlta }),
     }),
+
+  // ==========================================
+  // AUTENTICAÇÃO E SESSÃO (/auth)
+  // ==========================================
+  login: (email, senha) =>
+    request("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, senha }),
+    }),
+  cadastro: (nome, email, senha, cargo = "Operador Clínico") =>
+    request("/auth/cadastro", {
+      method: "POST",
+      body: JSON.stringify({ nome, email, senha, cargo }),
+    }),
+  obterSessao: () => {
+    try {
+      const data = localStorage.getItem("hospital_usuario");
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  },
+  salvarSessao: (usuario) => {
+    localStorage.setItem("hospital_usuario", JSON.stringify(usuario));
+  },
+  encerrarSessao: () => {
+    localStorage.removeItem("hospital_usuario");
+  },
 };

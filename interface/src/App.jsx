@@ -1,4 +1,5 @@
-import { Routes, Route, Outlet } from "react-router-dom";
+import { Routes, Route, Outlet, Navigate } from "react-router-dom";
+import { api } from "./services/api";
 
 import Sidebar from "./components/Sidebar/Sidebar";
 import Header from "./components/Header/Header";
@@ -18,6 +19,11 @@ import Cadastro from "./pages/Cadastro/Cadastro";
 import "./App.css";
 
 function AppLayout() {
+  const sessao = api.obterSessao();
+  if (!sessao) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <div className="app">
       <Sidebar />
