@@ -13,6 +13,7 @@ function Internacoes() {
   const [profissionais, setProfissionais] = useState([]);
   const [quartos, setQuartos] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [usuario, setUsuario] = useState(null);
 
   // Formulário
   const [pacienteId, setPacienteId] = useState("");
@@ -24,6 +25,7 @@ function Internacoes() {
 
   // Filtros
   const [filtroApenasAtivas, setFiltroApenasAtivas] = useState(true);
+  const [filtroMinhas, setFiltroMinhas] = useState(false);
 
   // Modais e Feedback
   const [mensagemSucesso, setMensagemSucesso] = useState("");
@@ -33,10 +35,33 @@ function Internacoes() {
   const [observacoesAlta, setObservacoesAlta] = useState("");
 
   useEffect(() => {
-    carregarDados();
+    const user = api.obterSessao();
+    setUsuario(user);
+    if (user?.cargo === "Médico Clínico") {
+      setFiltroMinhas(true);
+    }
+    carregarDados(user);
   }, [filtroApenasAtivas]);
 
-  async function carregarDados() {
+  const isAdmin = usuario?.cargo === "Administrador";
+  const isMedico = usuario?.cargo === "Médico Clínico";
+
+  const isDoctorAttending = (profissional) => {
+    if (!profissional || !usuario) return false;
+    if (profissional.email && usuario.email && profissional.email.toLowerCase() === usuario.email.toLowerCase()) {
+      return true;
+    }
+    if (profissional.nome && usuario.nome) {
+      const pClean = profissional.nome.toLowerCase().replace(/dr(a)?\.\s*/i, "").trim();
+      const uClean = usuario.nome.toLowerCase().replace(/dr(a)?\.\s*/i, "").trim();
+      if (pClean && uClean && (pClean.includes(uClean) || uClean.includes(pClean))) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  async function carregarDados(userAtual) {
     setCarregando(true);
     setMensagemErro("");
     try {
@@ -50,6 +75,22 @@ function Internacoes() {
       setPacientes(listaPacientes || []);
       setProfissionais(listaProfissionais || []);
       setQuartos(listaQuartos || []);
+
+      const sessao = userAtual || api.obterSessao();
+      if (sessao?.cargo === "Médico Clínico") {
+        const medico = (listaProfissionais || []).find((p) => {
+          if (p.email && sessao.email && p.email.toLowerCase() === sessao.email.toLowerCase()) return true;
+          if (p.nome && sessao.nome) {
+            const pClean = p.nome.toLowerCase().replace(/dr(a)?\.\s*/i, "").trim();
+            const uClean = sessao.nome.toLowerCase().replace(/dr(a)?\.\s*/i, "").trim();
+            if (pClean && uClean && (pClean.includes(uClean) || uClean.includes(pClean))) return true;
+          }
+          return false;
+        });
+        if (medico) {
+          setProfissionalId(medico.id.toString());
+        }
+      }
     } catch (err) {
       setMensagemErro(err.message);
     } finally {
@@ -78,7 +119,7 @@ function Internacoes() {
       setMensagemSucesso(`Internação de ${nova.paciente?.nome} no Quarto ${nova.quarto?.numeroIdentificacao} registrada com sucesso.`);
       carregarDados();
       setPacienteId("");
-      setProfissionalId("");
+      if (!isMedico) setProfissionalId("");
       setQuartoId("");
       setObservacoes("");
       setDataPrevistaAlta("");
@@ -89,7 +130,7 @@ function Internacoes() {
 
   function abrirModalAlta(internacao) {
     setInternacaoSelecionada(internacao);
-    setObservacoesAlta("Paciente estável, alta médica autorizada.");
+    setObservacoesAlta("Paciente clinicamente estável, plano terapêutico concluído com sucesso. Alta médica autorizada.");
     setModalAltaAberto(true);
   }
 
@@ -100,7 +141,7 @@ function Internacoes() {
 
     try {
       await api.registrarAlta(internacaoSelecionada.id, observacoesAlta);
-      setMensagemSucesso(`Alta médica de ${internacaoSelecionada.paciente?.nome} confirmada com sucesso. Leito liberado.`);
+      setMensagemSucesso(`Alta médica de ${internacaoSelecionada.paciente?.nome} confirmada com sucesso. O leito foi liberado.`);
       setModalAltaAberto(false);
       carregarDados();
     } catch (err) {
@@ -109,12 +150,23 @@ function Internacoes() {
     }
   }
 
+  const internacoesExibidas = internacoes.filter((i) => {
+    if (isMedico && filtroMinhas) {
+      return isDoctorAttending(i.profissionalResponsavel);
+    }
+    return true;
+  });
+
   return (
     <div>
       <div className="ds-page-header">
         <div className="ds-page-title">
-          <h1>Internações Hospitalares</h1>
-          <p>Admissão de pacientes, alocação de leitos e registro de alta médica com auditoria</p>
+          <h1>{isMedico ? "Internações & Altas Supervisionadas" : "Internações Hospitalares"}</h1>
+          <p>
+            {isMedico
+              ? "Prescrição de internação em leitos disponíveis e autorização de alta médica supervisionada"
+              : "Gestão executiva de admissões, ocupação de leitos e altas médicas hospitalares"}
+          </p>
         </div>
       </div>
 
@@ -123,7 +175,9 @@ function Internacoes() {
 
       <div className="ds-card" style={{ marginBottom: "28px" }}>
         <div className="ds-card-header">
-          <div className="ds-card-title">Admitir Paciente para Internação</div>
+          <div className="ds-card-title">
+            {isMedico ? "Prescrever Nova Internação Hospitalar" : "Admitir Paciente para Internação"}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -146,7 +200,10 @@ function Internacoes() {
             </div>
 
             <div className="ds-field">
-              <label className="ds-label">Médico Responsável *</label>
+              <label className="ds-label">
+                Médico Assistente Responsável *
+                {isMedico && " (Você está pré-selecionado)"}
+              </label>
               <select
                 className="ds-select"
                 value={profissionalId}
@@ -154,23 +211,26 @@ function Internacoes() {
                 required
               >
                 <option value="">Selecione o médico</option>
-                {profissionais.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nome} — {formatCategoriaProfissional(p.categoria)}
-                  </option>
-                ))}
+                {profissionais.map((p) => {
+                  const eLogado = isDoctorAttending(p);
+                  return (
+                    <option key={p.id} value={p.id}>
+                      {p.nome} {eLogado ? "(Você)" : ""} — {formatCategoriaProfissional(p.categoria)}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
             <div className="ds-field">
-              <label className="ds-label">Quarto / Leito com Vaga *</label>
+              <label className="ds-label">Quarto / Leito Disponível *</label>
               <select
                 className="ds-select"
                 value={quartoId}
                 onChange={(e) => setQuartoId(e.target.value)}
                 required
               >
-                <option value="">Selecione um quarto disponível</option>
+                <option value="">Selecione um quarto com vagas</option>
                 {quartosDisponiveis.map((q) => (
                   <option key={q.id} value={q.id}>
                     Quarto {q.numeroIdentificacao} ({formatTipoQuarto(q.tipoQuarto)} &bull; Andar {q.andar} &bull; {q.quantidadeOcupantes}/{q.capacidadeMaxima} leitos)
@@ -221,8 +281,31 @@ function Internacoes() {
       </div>
 
       <div className="ds-card">
-        <div className="ds-card-header">
-          <div className="ds-card-title">Internações Cadastradas ({internacoes.length})</div>
+        <div className="ds-card-header" style={{ flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <div className="ds-card-title">Internações Hospitalares ({internacoesExibidas.length})</div>
+
+            {isMedico && (
+              <div style={{ display: "flex", gap: "6px" }}>
+                <button
+                  type="button"
+                  className={`ds-btn ds-btn-sm ${filtroMinhas ? "ds-btn-primary" : "ds-btn-secondary"}`}
+                  onClick={() => setFiltroMinhas(true)}
+                  style={{ padding: "4px 10px", fontSize: "0.8rem" }}
+                >
+                  Minhas Internações
+                </button>
+                <button
+                  type="button"
+                  className={`ds-btn ds-btn-sm ${!filtroMinhas ? "ds-btn-primary" : "ds-btn-secondary"}`}
+                  onClick={() => setFiltroMinhas(false)}
+                  style={{ padding: "4px 10px", fontSize: "0.8rem" }}
+                >
+                  Todas da Unidade
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="ds-tabs" style={{ marginBottom: 0 }}>
             <button
@@ -235,7 +318,7 @@ function Internacoes() {
               className={`ds-tab ${!filtroApenasAtivas ? "active" : ""}`}
               onClick={() => setFiltroApenasAtivas(false)}
             >
-              Todas (Incluindo Altas)
+              Histórico Completo (com Altas)
             </button>
           </div>
         </div>
@@ -255,73 +338,81 @@ function Internacoes() {
                   <th>Data de Entrada</th>
                   <th>Previsão / Alta</th>
                   <th>Status</th>
-                  <th>Ações</th>
+                  <th>Conduta</th>
                 </tr>
               </thead>
               <tbody>
-                {internacoes.length === 0 ? (
+                {internacoesExibidas.length === 0 ? (
                   <tr>
                     <td colSpan="7" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
-                      Nenhuma internação hospitalar registrada.
+                      Nenhuma internação hospitalar registrada com os filtros aplicados.
                     </td>
                   </tr>
                 ) : (
-                  internacoes.map((i) => (
-                    <tr key={i.id}>
-                      <td>
-                        <strong>{i.paciente?.nome}</strong>
-                        <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                          CPF: {formatCPF(i.paciente?.cpf)}
-                        </div>
-                      </td>
-                      <td>{i.profissionalResponsavel?.nome}</td>
-                      <td>
-                        <span className="ds-badge" style={{ background: "#f1f5f9", color: "#334155" }}>
-                          Quarto {i.quarto?.numeroIdentificacao} ({formatTipoQuarto(i.quarto?.tipoQuarto)})
-                        </span>
-                      </td>
-                      <td>
-                        <span className="tabular-nums">
-                          {formatDataHora(i.dataEntrada)}
-                        </span>
-                      </td>
-                      <td>
-                        {i.dataEfetivaAlta ? (
-                          <span style={{ color: "var(--success)" }}>
-                            Alta: {formatDataHora(i.dataEfetivaAlta)}
+                  internacoesExibidas.map((i) => {
+                    const eDoMedico = isDoctorAttending(i.profissionalResponsavel);
+                    return (
+                      <tr key={i.id}>
+                        <td>
+                          <strong>{i.paciente?.nome}</strong>
+                          <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                            CPF: {formatCPF(i.paciente?.cpf)}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: eDoMedico ? 600 : 400, color: eDoMedico ? "var(--primary)" : "inherit" }}>
+                            {i.profissionalResponsavel?.nome} {eDoMedico && "(Você)"}
+                          </div>
+                        </td>
+                        <td>
+                          <span className="ds-badge" style={{ background: "#f1f5f9", color: "#334155" }}>
+                            Quarto {i.quarto?.numeroIdentificacao} ({formatTipoQuarto(i.quarto?.tipoQuarto)})
                           </span>
-                        ) : i.dataPrevistaAlta ? (
+                        </td>
+                        <td>
                           <span className="tabular-nums">
-                            {formatDataHora(i.dataPrevistaAlta)}
+                            {formatDataHora(i.dataEntrada)}
                           </span>
-                        ) : (
-                          <span style={{ color: "var(--text-muted)" }}>Acompanhamento</span>
-                        )}
-                      </td>
-                      <td>
-                        <span
-                          className="ds-badge"
-                          style={{
-                            background: i.ativa ? "var(--success-subtle)" : "#f1f5f9",
-                            color: i.ativa ? "var(--success-text)" : "#64748b"
-                          }}
-                        >
-                          {i.ativa ? "Internado" : "Alta Realizada"}
-                        </span>
-                      </td>
-                      <td>
-                        {i.ativa && (
-                          <button
-                            className="ds-btn ds-btn-sm"
-                            style={{ background: "#ecfdf5", color: "#065f46", border: "1px solid #a7f3d0" }}
-                            onClick={() => abrirModalAlta(i)}
+                        </td>
+                        <td>
+                          {i.dataEfetivaAlta ? (
+                            <span style={{ color: "var(--success)" }}>
+                              Alta: {formatDataHora(i.dataEfetivaAlta)}
+                            </span>
+                          ) : i.dataPrevistaAlta ? (
+                            <span className="tabular-nums">
+                              {formatDataHora(i.dataPrevistaAlta)}
+                            </span>
+                          ) : (
+                            <span style={{ color: "var(--text-muted)" }}>Em Acompanhamento</span>
+                          )}
+                        </td>
+                        <td>
+                          <span
+                            className="ds-badge"
+                            style={{
+                              background: i.ativa ? "var(--success-subtle)" : "#f1f5f9",
+                              color: i.ativa ? "var(--success-text)" : "#64748b"
+                            }}
                           >
-                            Dar Alta
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                            {i.ativa ? "Internado" : "Alta Realizada"}
+                          </span>
+                        </td>
+                        <td>
+                          {i.ativa && (
+                            <button
+                              className="ds-btn ds-btn-sm"
+                              style={{ background: "#ecfdf5", color: "#065f46", border: "1px solid #a7f3d0" }}
+                              onClick={() => abrirModalAlta(i)}
+                              title="Registrar alta médica hospitalar"
+                            >
+                              Dar Alta
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

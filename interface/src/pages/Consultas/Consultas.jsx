@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { api } from "../../services/api";
 import {
   formatSituacaoConsulta,
@@ -12,10 +13,12 @@ import {
 } from "../../utils/formatters";
 
 function Consultas() {
+  const location = useLocation();
   const [consultas, setConsultas] = useState([]);
   const [pacientes, setPacientes] = useState([]);
   const [profissionais, setProfissionais] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [usuario, setUsuario] = useState(null);
 
   // Formulário de novo atendimento
   const [pacienteId, setPacienteId] = useState("");
@@ -34,6 +37,7 @@ function Consultas() {
   const [obsPreOperatorias, setObsPreOperatorias] = useState("");
 
   // Filtros
+  const [filtroAba, setFiltroAba] = useState("TODAS");
   const [filtroModalidade, setFiltroModalidade] = useState("TODAS");
   const [filtroSituacao, setFiltroSituacao] = useState("TODAS");
 
@@ -48,10 +52,25 @@ function Consultas() {
   const [observacoesModal, setObservacoesModal] = useState("");
 
   useEffect(() => {
-    carregarDados();
-  }, []);
+    const user = api.obterSessao();
+    setUsuario(user);
+    if (user?.cargo === "Médico Clínico") {
+      setFiltroAba("MINHAS");
+    }
 
-  async function carregarDados() {
+    // Suporte a query params da URL (ex: ?emergencia=true)
+    const params = new URLSearchParams(location.search);
+    if (params.get("emergencia") === "true") {
+      setFiltroAba("EMERGENCIA");
+      setModalidade("EMERGENCIA");
+    } else if (params.get("minhas") === "true") {
+      setFiltroAba("MINHAS");
+    }
+
+    carregarDados(user);
+  }, [location.search]);
+
+  async function carregarDados(userAtual) {
     setCarregando(true);
     setMensagemErro("");
     try {
@@ -63,12 +82,47 @@ function Consultas() {
       setConsultas(listaConsultas || []);
       setPacientes(listaPacientes || []);
       setProfissionais(listaProfissionais || []);
+
+      // Se for médico e estiver em modalidade ROTINA, auto-seleciona ele mesmo
+      const sessao = userAtual || api.obterSessao();
+      if (sessao?.cargo === "Médico Clínico") {
+        const medico = (listaProfissionais || []).find((p) => {
+          if (p.email && sessao.email && p.email.toLowerCase() === sessao.email.toLowerCase()) return true;
+          if (p.nome && sessao.nome) {
+            const pClean = p.nome.toLowerCase().replace(/dr(a)?\.\s*/i, "").trim();
+            const uClean = sessao.nome.toLowerCase().replace(/dr(a)?\.\s*/i, "").trim();
+            if (pClean && uClean && (pClean.includes(uClean) || uClean.includes(pClean))) return true;
+          }
+          return false;
+        });
+        if (medico) {
+          setProfissionalId(medico.id.toString());
+        }
+      }
     } catch (err) {
       setMensagemErro(err.message);
     } finally {
       setCarregando(false);
     }
   }
+
+  const isAdmin = usuario?.cargo === "Administrador";
+  const isMedico = usuario?.cargo === "Médico Clínico";
+
+  const isDoctorAttending = (profissional) => {
+    if (!profissional || !usuario) return false;
+    if (profissional.email && usuario.email && profissional.email.toLowerCase() === usuario.email.toLowerCase()) {
+      return true;
+    }
+    if (profissional.nome && usuario.nome) {
+      const pClean = profissional.nome.toLowerCase().replace(/dr(a)?\.\s*/i, "").trim();
+      const uClean = usuario.nome.toLowerCase().replace(/dr(a)?\.\s*/i, "").trim();
+      if (pClean && uClean && (pClean.includes(uClean) || uClean.includes(pClean))) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   // Filtra médicos no dropdown de acordo com a modalidade
   const profissionaisDisponiveis = profissionais.filter((p) => {
@@ -150,6 +204,10 @@ function Consultas() {
   }
 
   async function handleExcluir(id) {
+    if (!isAdmin) {
+      alert("Apenas administradores hospitalares possuem autorização para excluir atendimentos.");
+      return;
+    }
     if (!window.confirm("Deseja realmente remover este atendimento do sistema?")) return;
     setMensagemSucesso("");
     setMensagemErro("");
@@ -162,7 +220,12 @@ function Consultas() {
     }
   }
 
+  const totalMinhas = consultas.filter((c) => isDoctorAttending(c.profissional)).length;
+  const totalEmergencias = consultas.filter((c) => c.modalidade === "EMERGENCIA").length;
+
   const consultasFiltradas = consultas.filter((c) => {
+    if (filtroAba === "MINHAS" && !isDoctorAttending(c.profissional)) return false;
+    if (filtroAba === "EMERGENCIA" && c.modalidade !== "EMERGENCIA") return false;
     const matchModalidade = filtroModalidade === "TODAS" || c.modalidade === filtroModalidade;
     const matchSituacao = filtroSituacao === "TODAS" || c.situacao === filtroSituacao;
     return matchModalidade && matchSituacao;
@@ -172,8 +235,12 @@ function Consultas() {
     <div>
       <div className="ds-page-header">
         <div className="ds-page-title">
-          <h1>Atendimentos & Consultas</h1>
-          <p>Gestão integrada de rotina, especialidades, pronto-socorro e procedimentos cirúrgicos</p>
+          <h1>{isMedico ? "Meus Atendimentos & Fila Clínica" : "Atendimentos & Consultas"}</h1>
+          <p>
+            {isMedico
+              ? "Pronto-atendimento, consultas ambulatoriais e acompanhamento de seus pacientes"
+              : "Gestão integrada de rotina, especialidades, pronto-socorro e procedimentos cirúrgicos"}
+          </p>
         </div>
       </div>
 
@@ -183,7 +250,9 @@ function Consultas() {
       {/* Formulário Novo Atendimento */}
       <div className="ds-card" style={{ marginBottom: "28px" }}>
         <div className="ds-card-header">
-          <div className="ds-card-title">Novo Atendimento / Agendamento</div>
+          <div className="ds-card-title">
+            {isMedico ? "Novo Atendimento / Encaminhamento Clínico" : "Novo Atendimento / Agendamento"}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -194,13 +263,19 @@ function Consultas() {
                 className="ds-select"
                 value={modalidade}
                 onChange={(e) => {
-                  setModalidade(e.target.value);
-                  setProfissionalId("");
+                  const novaModalidade = e.target.value;
+                  setModalidade(novaModalidade);
+                  if (novaModalidade === "ROTINA" && isMedico) {
+                    const medico = profissionais.find((p) => isDoctorAttending(p));
+                    if (medico) setProfissionalId(medico.id.toString());
+                  } else {
+                    setProfissionalId("");
+                  }
                 }}
               >
                 <option value="ROTINA">Consulta de Rotina</option>
-                <option value="ESPECIALIZADA">Consulta Especializada</option>
-                <option value="EMERGENCIA">Atendimento de Emergência</option>
+                <option value="ESPECIALIZADA">Consulta Especializada (Encaminhamento)</option>
+                <option value="EMERGENCIA">Atendimento de Emergência (Pronto-Socorro)</option>
                 <option value="PROCEDIMENTO_CIRURGICO">Procedimento Cirúrgico</option>
               </select>
             </div>
@@ -224,9 +299,12 @@ function Consultas() {
 
             <div className="ds-field">
               <label className="ds-label">
-                Profissional Responsável *
-                {modalidade === "PROCEDIMENTO_CIRURGICO" && " [Cirurgiões]"}
-                {modalidade === "ESPECIALIZADA" && " [Especialistas]"}
+                {modalidade === "ESPECIALIZADA"
+                  ? "Especialista para Encaminhamento *"
+                  : modalidade === "PROCEDIMENTO_CIRURGICO"
+                  ? "Cirurgião Responsável *"
+                  : "Profissional Responsável *"}
+                {isMedico && modalidade === "ROTINA" && " (Você está pré-selecionado)"}
               </label>
               <select
                 className="ds-select"
@@ -235,11 +313,15 @@ function Consultas() {
                 required
               >
                 <option value="">Selecione o médico responsável</option>
-                {profissionaisDisponiveis.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nome} — {formatCategoriaProfissional(p.categoria)} {p.especialidade ? `(${p.especialidade})` : ""}
-                  </option>
-                ))}
+                {profissionaisDisponiveis.map((p) => {
+                  const eLogado = isDoctorAttending(p);
+                  return (
+                    <option key={p.id} value={p.id}>
+                      {p.nome} {eLogado ? "(Você)" : ""} — {formatCategoriaProfissional(p.categoria)}{" "}
+                      {p.especialidade ? `(${p.especialidade})` : ""}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -266,35 +348,37 @@ function Consultas() {
             </div>
 
             <div className="ds-field">
-              <label className="ds-label">Motivo do Atendimento *</label>
+              <label className="ds-label">Motivo do Atendimento / Queixa Principal *</label>
               <input
                 className="ds-input"
-                placeholder="Ex: Avaliação de rotina, dores lombares"
+                type="text"
+                placeholder="Ex: Cefaleia recorrente, dor torácica, revisão laboratorial"
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value)}
                 required
               />
             </div>
 
-            {/* Campos Dinâmicos: Especializada */}
+            {/* Campos Dinâmicos por Modalidade */}
             {modalidade === "ESPECIALIZADA" && (
               <div className="ds-field">
-                <label className="ds-label">Especialidade Requerida *</label>
+                <label className="ds-label">Especialidade Solicitada *</label>
                 <select
                   className="ds-select"
                   value={especialidadeRequerida}
                   onChange={(e) => setEspecialidadeRequerida(e.target.value)}
+                  required
                 >
                   <option value="Cardiologia">Cardiologia</option>
                   <option value="Ortopedia">Ortopedia</option>
                   <option value="Neurologia">Neurologia</option>
-                  <option value="Pediatria">Pediatria</option>
                   <option value="Dermatologia">Dermatologia</option>
+                  <option value="Pediatria">Pediatria</option>
+                  <option value="Ginecologia">Ginecologia</option>
                 </select>
               </div>
             )}
 
-            {/* Campos Dinâmicos: Emergência */}
             {modalidade === "EMERGENCIA" && (
               <div className="ds-field">
                 <label className="ds-label">Classificação de Risco (Manchester) *</label>
@@ -302,23 +386,24 @@ function Consultas() {
                   className="ds-select"
                   value={prioridadeEmergencia}
                   onChange={(e) => setPrioridadeEmergencia(e.target.value)}
+                  required
                 >
-                  <option value="BAIXA">Baixa (Verde — Não urgente)</option>
-                  <option value="MODERADA">Moderada (Amarela — Urgente)</option>
-                  <option value="ALTA">Alta (Laranja — Muito urgente)</option>
-                  <option value="CRITICA">Crítica (Vermelha — Emergência Imediata)</option>
+                  <option value="BAIXA">Verde — Pouco Urgente (Baixa)</option>
+                  <option value="MODERADA">Amarelo — Urgente (Moderada)</option>
+                  <option value="ALTA">Laranja — Muito Urgente (Alta)</option>
+                  <option value="CRITICA">Vermelho — Emergência Imediata (Crítica)</option>
                 </select>
               </div>
             )}
 
-            {/* Campos Dinâmicos: Procedimento Cirúrgico */}
             {modalidade === "PROCEDIMENTO_CIRURGICO" && (
               <>
                 <div className="ds-field">
                   <label className="ds-label">Tipo de Cirurgia *</label>
                   <input
                     className="ds-input"
-                    placeholder="Ex: Apendicectomia, Artroscopia"
+                    type="text"
+                    placeholder="Ex: Apendicectomia, Artroscopia, Colecistectomia"
                     value={tipoCirurgia}
                     onChange={(e) => setTipoCirurgia(e.target.value)}
                     required
@@ -328,55 +413,85 @@ function Consultas() {
                   <label className="ds-label">Descrição do Procedimento *</label>
                   <input
                     className="ds-input"
-                    placeholder="Detalhes técnicos da intervenção"
+                    type="text"
+                    placeholder="Ex: Remoção laparoscópica sob anestesia geral"
                     value={descricaoProcedimento}
                     onChange={(e) => setDescricaoProcedimento(e.target.value)}
                     required
                   />
                 </div>
-                <div className="ds-field">
-                  <label className="ds-label">Observações Pré-Operatórias</label>
+                <div className="ds-field" style={{ gridColumn: "1 / -1" }}>
+                  <label className="ds-label">Orientações Pré-Operatórias (Jejum, exames, etc.)</label>
                   <input
                     className="ds-input"
-                    placeholder="Ex: Jejum 8h, exames de coagulação OK"
+                    type="text"
+                    placeholder="Ex: Jejum de 8h, coagulograma em mãos, suspender AAS 7 dias antes"
                     value={obsPreOperatorias}
                     onChange={(e) => setObsPreOperatorias(e.target.value)}
                   />
                 </div>
               </>
             )}
+
+            <div className="ds-field" style={{ gridColumn: "1 / -1" }}>
+              <label className="ds-label">Observações Clínicas Gerais</label>
+              <textarea
+                className="ds-textarea"
+                rows="2"
+                placeholder="Histórico prévio, alergias informadas ou observações de triagem..."
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+              />
+            </div>
           </div>
 
-          <div className="ds-field" style={{ marginTop: "16px" }}>
-            <label className="ds-label">Observações Clínicas / Histórico Prévio</label>
-            <textarea
-              className="ds-textarea"
-              rows="2"
-              placeholder="Anotações adicionais do paciente..."
-              value={observacoes}
-              onChange={(e) => setObservacoes(e.target.value)}
-            />
-          </div>
-
-          <div style={{ marginTop: "20px" }}>
+          <div style={{ marginTop: "16px", display: "flex", justifyContent: "flex-end" }}>
             <button type="submit" className="ds-btn ds-btn-primary">
-              Confirmar Agendamento / Registro
+              {isMedico ? "Registrar Atendimento" : "Salvar Agendamento"}
             </button>
           </div>
         </form>
       </div>
 
-      {/* Lista de Atendimentos */}
+      {/* Lista com Abas e Filtros Contextuais */}
       <div className="ds-card">
-        <div className="ds-card-header">
-          <div className="ds-card-title">
-            <span>Atendimentos Cadastrados ({consultasFiltradas.length})</span>
+        <div className="ds-card-header" style={{ flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <div className="ds-card-title">Fila de Atendimentos</div>
+            <div style={{ display: "flex", gap: "6px" }}>
+              {isMedico && (
+                <button
+                  type="button"
+                  onClick={() => setFiltroAba("MINHAS")}
+                  className={`ds-btn ds-btn-sm ${filtroAba === "MINHAS" ? "ds-btn-primary" : "ds-btn-secondary"}`}
+                  style={{ padding: "4px 10px", fontSize: "0.8rem" }}
+                >
+                  Meus Atendimentos ({totalMinhas})
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setFiltroAba("EMERGENCIA")}
+                className={`ds-btn ds-btn-sm ${filtroAba === "EMERGENCIA" ? "ds-btn-primary" : "ds-btn-secondary"}`}
+                style={{ padding: "4px 10px", fontSize: "0.8rem" }}
+              >
+                Pronto-Socorro / Urgência ({totalEmergencias})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroAba("TODAS")}
+                className={`ds-btn ds-btn-sm ${filtroAba === "TODAS" ? "ds-btn-primary" : "ds-btn-secondary"}`}
+                style={{ padding: "4px 10px", fontSize: "0.8rem" }}
+              >
+                Todos ({consultas.length})
+              </button>
+            </div>
           </div>
 
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             <select
               className="ds-select"
-              style={{ width: "auto", padding: "6px 12px", fontSize: "0.8rem" }}
+              style={{ width: "auto", fontSize: "0.825rem", padding: "6px 10px" }}
               value={filtroModalidade}
               onChange={(e) => setFiltroModalidade(e.target.value)}
             >
@@ -384,12 +499,12 @@ function Consultas() {
               <option value="ROTINA">Rotina</option>
               <option value="ESPECIALIZADA">Especializada</option>
               <option value="EMERGENCIA">Emergência</option>
-              <option value="PROCEDIMENTO_CIRURGICO">Cirurgia</option>
+              <option value="PROCEDIMENTO_CIRURGICO">Cirúrgico</option>
             </select>
 
             <select
               className="ds-select"
-              style={{ width: "auto", padding: "6px 12px", fontSize: "0.8rem" }}
+              style={{ width: "auto", fontSize: "0.825rem", padding: "6px 10px" }}
               value={filtroSituacao}
               onChange={(e) => setFiltroSituacao(e.target.value)}
             >
@@ -399,13 +514,12 @@ function Consultas() {
               <option value="EM_ATENDIMENTO">Em Atendimento</option>
               <option value="CONCLUIDA">Concluída</option>
               <option value="CANCELADA">Cancelada</option>
-              <option value="NAO_COMPARECEU">Não Compareceu</option>
             </select>
           </div>
         </div>
 
         {carregando ? (
-          <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
+          <div style={{ padding: "30px", textAlign: "center", color: "var(--text-muted)" }}>
             Carregando atendimentos...
           </div>
         ) : (
@@ -415,32 +529,43 @@ function Consultas() {
                 <tr>
                   <th>Paciente</th>
                   <th>Médico Responsável</th>
-                  <th>Modalidade & Detalhes</th>
+                  <th>Modalidade</th>
                   <th>Data & Horário</th>
                   <th>Situação</th>
-                  <th>Ações de Fluxo</th>
+                  <th>Ações Clínicas</th>
                 </tr>
               </thead>
               <tbody>
                 {consultasFiltradas.length === 0 ? (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
-                      Nenhum atendimento correspondente aos filtros.
+                    <td colSpan="6" style={{ textAlign: "center", padding: "36px", color: "var(--text-muted)" }}>
+                      {filtroAba === "MINHAS"
+                        ? "Você não possui atendimentos atribuídos com os filtros atuais."
+                        : "Nenhum atendimento encontrado."}
                     </td>
                   </tr>
                 ) : (
                   consultasFiltradas.map((c) => {
-                    const situacaoBadge = `badge-${c.situacao?.toLowerCase().replace("_", "-")}`;
+                    const badgeClass = `badge-${c.situacao?.toLowerCase().replace("_", "-")}`;
+                    const eDoMedico = isDoctorAttending(c.profissional);
+
                     return (
                       <tr key={c.id}>
                         <td>
                           <strong>{c.paciente?.nome}</strong>
                           <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{c.motivo}</div>
+                          {c.tipoCirurgia && (
+                            <div style={{ fontSize: "0.75rem", color: "var(--primary)", marginTop: "2px" }}>
+                              Cirurgia: {c.tipoCirurgia}
+                            </div>
+                          )}
                         </td>
                         <td>
-                          <div>{c.profissional?.nome}</div>
+                          <div style={{ fontWeight: eDoMedico ? 600 : 400, color: eDoMedico ? "var(--primary)" : "inherit" }}>
+                            {c.profissional?.nome} {eDoMedico && "(Você)"}
+                          </div>
                           <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                            {formatCategoriaProfissional(c.profissional?.categoria)} {c.profissional?.especialidade ? `• ${c.profissional.especialidade}` : ""}
+                            {formatCategoriaProfissional(c.profissional?.categoria)} {c.especialidadeRequerida ? `(${c.especialidadeRequerida})` : ""}
                           </div>
                         </td>
                         <td>
@@ -448,36 +573,39 @@ function Consultas() {
                             {formatModalidade(c.modalidade)}
                           </span>
                           {c.prioridadeEmergencia && (
-                            <div style={{ marginTop: "4px" }}>
-                              <span className="ds-badge" style={{
-                                background: c.prioridadeEmergencia === "CRITICA" ? "#fee2e2" : "#fffbeb",
+                            <span
+                              className="ds-badge"
+                              style={{
+                                marginLeft: "6px",
+                                background: c.prioridadeEmergencia === "CRITICA" ? "#fee2e2" : "#fef3c7",
                                 color: c.prioridadeEmergencia === "CRITICA" ? "#dc2626" : "#b45309"
-                              }}>
-                                Prioridade: {formatPrioridadeEmergencia(c.prioridadeEmergencia)}
-                              </span>
-                            </div>
+                              }}
+                            >
+                              {formatPrioridadeEmergencia(c.prioridadeEmergencia)}
+                            </span>
                           )}
-                          {c.tipoCirurgia && (
-                            <div style={{ fontSize: "0.75rem", color: "var(--surgery-text)", marginTop: "2px" }}>
-                              Cirurgia: <strong>{c.tipoCirurgia}</strong>
-                              {c.situacaoProcedimento && ` • ${formatSituacaoProcedimento(c.situacaoProcedimento)}`}
+                          {c.statusProcedimento && (
+                            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: "4px" }}>
+                              {formatSituacaoProcedimento(c.statusProcedimento)}
                             </div>
                           )}
                         </td>
                         <td>
-                          <span className="tabular-nums">{formatData(c.dataConsulta)}</span> às <span className="tabular-nums">{formatHorario(c.horario)}</span>
+                          <span className="tabular-nums">{formatData(c.dataConsulta)}</span> às{" "}
+                          <span className="tabular-nums">{formatHorario(c.horario)}</span>
                         </td>
                         <td>
-                          <span className={`ds-badge ${situacaoBadge}`}>
+                          <span className={`ds-badge ${badgeClass}`}>
                             {formatSituacaoConsulta(c.situacao)}
                           </span>
                         </td>
                         <td>
-                          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                             {c.situacao === "AGENDADA" && (
                               <button
                                 className="ds-btn ds-btn-sm ds-btn-secondary"
                                 onClick={() => handleAcaoRapida(c.id, "CONFIRMADA")}
+                                title="Confirmar presença do paciente"
                               >
                                 Confirmar
                               </button>
@@ -487,6 +615,7 @@ function Consultas() {
                                 className="ds-btn ds-btn-sm"
                                 style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" }}
                                 onClick={() => handleAcaoRapida(c.id, "EM_ATENDIMENTO")}
+                                title="Iniciar consulta agora"
                               >
                                 Iniciar
                               </button>
@@ -496,6 +625,7 @@ function Consultas() {
                                 className="ds-btn ds-btn-sm"
                                 style={{ background: "#ecfdf5", color: "#065f46", border: "1px solid #a7f3d0" }}
                                 onClick={() => abrirModal(c, "CONCLUIDA")}
+                                title="Concluir atendimento e registrar prontuário"
                               >
                                 Concluir
                               </button>
@@ -505,15 +635,18 @@ function Consultas() {
                                 className="ds-btn ds-btn-sm ds-btn-secondary"
                                 style={{ color: "var(--danger)" }}
                                 onClick={() => abrirModal(c, "CANCELADA")}
+                                title="Cancelar agendamento"
                               >
                                 Cancelar
                               </button>
                             )}
-                            {c.situacao !== "CONCLUIDA" && (
+
+                            {/* Exclusão restrita a Administrador */}
+                            {isAdmin && c.situacao !== "CONCLUIDA" && (
                               <button
                                 className="ds-btn ds-btn-sm"
                                 style={{ background: "transparent", color: "var(--text-dim)", border: "none" }}
-                                title="Excluir atendimento"
+                                title="Remover agendamento (Apenas Administrador)"
                                 onClick={() => handleExcluir(c.id)}
                               >
                                 ✕
@@ -531,7 +664,7 @@ function Consultas() {
         )}
       </div>
 
-      {/* Modal Semântico de Conclusão / Cancelamento */}
+      {/* Modal de Conclusão / Cancelamento */}
       {modalAberto && (
         <div className="ds-modal-backdrop" onClick={() => setModalAberto(false)}>
           <div className="ds-modal" onClick={(e) => e.stopPropagation()}>
@@ -554,15 +687,15 @@ function Consultas() {
 
               <div className="ds-field">
                 <label className="ds-label">
-                  {acaoModal === "CONCLUIDA" ? "Anotações Médicas / Diagnóstico *" : "Motivo do Cancelamento *"}
+                  {acaoModal === "CONCLUIDA" ? "Anotações Clínicas / Conduta do Atendimento *" : "Motivo do Cancelamento *"}
                 </label>
                 <textarea
                   className="ds-textarea"
                   rows="4"
                   placeholder={
                     acaoModal === "CONCLUIDA"
-                      ? "Informe as observações de encerramento da consulta ou pós-cirúrgico..."
-                      : "Informe o motivo do cancelamento para registro em auditoria..."
+                      ? "Informe as observações de encerramento da consulta, conduta terapêutica ou orientações prescritas..."
+                      : "Informe o motivo do cancelamento para registro administrativo..."
                   }
                   value={observacoesModal}
                   onChange={(e) => setObservacoesModal(e.target.value)}

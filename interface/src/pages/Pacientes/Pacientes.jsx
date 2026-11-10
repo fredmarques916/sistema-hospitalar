@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../../services/api";
 import { formatCPF, formatTelefone, formatData } from "../../utils/formatters";
 
 function Pacientes() {
   const [pacientes, setPacientes] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [usuario, setUsuario] = useState(null);
 
   // Formulário
   const [nome, setNome] = useState("");
@@ -19,8 +21,12 @@ function Pacientes() {
   const [mensagemErro, setMensagemErro] = useState("");
 
   useEffect(() => {
+    setUsuario(api.obterSessao());
     carregarPacientes();
   }, []);
+
+  const isAdmin = usuario?.cargo === "Administrador";
+  const isMedico = usuario?.cargo === "Médico Clínico";
 
   async function carregarPacientes() {
     setCarregando(true);
@@ -65,6 +71,10 @@ function Pacientes() {
   }
 
   async function handleExcluir(id, nomePaciente) {
+    if (!isAdmin) {
+      alert("Apenas administradores hospitalares têm permissão para remover cadastros de pacientes.");
+      return;
+    }
     if (!window.confirm(`Deseja remover o cadastro do paciente "${nomePaciente}"?`)) return;
     setMensagemSucesso("");
     setMensagemErro("");
@@ -88,8 +98,12 @@ function Pacientes() {
     <div>
       <div className="ds-page-header">
         <div className="ds-page-title">
-          <h1>Prontuário & Cadastro de Pacientes</h1>
-          <p>Identificação unificada de pacientes para atendimento clínico e internação hospitalar</p>
+          <h1>{isMedico ? "Pacientes da Unidade" : "Prontuário & Cadastro de Pacientes"}</h1>
+          <p>
+            {isMedico
+              ? "Localização de pacientes para atendimento clínico imediato, prescrição e internação"
+              : "Identificação unificada de pacientes para atendimento clínico e internação hospitalar"}
+          </p>
         </div>
       </div>
 
@@ -98,7 +112,7 @@ function Pacientes() {
 
       <div className="ds-card" style={{ marginBottom: "28px" }}>
         <div className="ds-card-header">
-          <div className="ds-card-title">Novo Paciente</div>
+          <div className="ds-card-title">Cadastrar Novo Paciente</div>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -107,7 +121,6 @@ function Pacientes() {
               <label className="ds-label">Nome Completo *</label>
               <input
                 className="ds-input"
-                type="text"
                 placeholder="Ex: Maria da Silva"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
@@ -116,10 +129,9 @@ function Pacientes() {
             </div>
 
             <div className="ds-field">
-              <label className="ds-label">CPF *</label>
+              <label className="ds-label">Documento de Identificação (CPF) *</label>
               <input
                 className="ds-input"
-                type="text"
                 placeholder="000.000.000-00"
                 value={cpf}
                 onChange={(e) => setCpf(e.target.value)}
@@ -139,13 +151,13 @@ function Pacientes() {
             </div>
 
             <div className="ds-field">
-              <label className="ds-label">Telefone de Contato</label>
+              <label className="ds-label">Telefone de Contato *</label>
               <input
                 className="ds-input"
-                type="text"
                 placeholder="(31) 98765-4321"
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value)}
+                required
               />
             </div>
 
@@ -154,7 +166,7 @@ function Pacientes() {
               <input
                 className="ds-input"
                 type="email"
-                placeholder="paciente@email.com"
+                placeholder="maria.silva@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -164,32 +176,39 @@ function Pacientes() {
               <label className="ds-label">Endereço Residencial</label>
               <input
                 className="ds-input"
-                type="text"
-                placeholder="Rua, número, bairro, cidade"
+                placeholder="Rua, número, bairro e cidade"
                 value={endereco}
                 onChange={(e) => setEndereco(e.target.value)}
               />
             </div>
           </div>
 
-          <div style={{ marginTop: "20px" }}>
+          <div style={{ marginTop: "16px", display: "flex", justifyContent: "flex-end" }}>
             <button type="submit" className="ds-btn ds-btn-primary">
-              Salvar Paciente
+              Cadastrar Paciente
             </button>
           </div>
         </form>
       </div>
 
       <div className="ds-card">
-        <div className="ds-card-header">
-          <div className="ds-card-title">Pacientes Cadastrados ({pacientesFiltrados.length})</div>
-          <input
-            className="ds-input"
-            style={{ width: "240px", padding: "6px 12px", fontSize: "0.825rem" }}
-            placeholder="Buscar por nome ou CPF..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-          />
+        <div className="ds-card-header" style={{ flexWrap: "wrap", gap: "12px" }}>
+          <div className="ds-card-title">
+            <span>Pacientes Registrados</span>
+            <span className="ds-badge" style={{ background: "#f1f5f9", color: "#475569" }}>
+              Total: {pacientesFiltrados.length}
+            </span>
+          </div>
+
+          <div>
+            <input
+              className="ds-input"
+              style={{ width: "240px", fontSize: "0.825rem", padding: "6px 10px" }}
+              placeholder="Buscar por nome, CPF ou e-mail..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
         </div>
 
         {carregando ? (
@@ -236,13 +255,29 @@ function Pacientes() {
                       </td>
                       <td>{p.endereco || "Não informado"}</td>
                       <td>
-                        <button
-                          className="ds-btn ds-btn-sm ds-btn-secondary"
-                          style={{ color: "var(--danger)" }}
-                          onClick={() => handleExcluir(p.id, p.nome)}
-                        >
-                          Remover
-                        </button>
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                          {isMedico && (
+                            <Link
+                              to="/dashboard/consultas"
+                              className="ds-btn ds-btn-sm ds-btn-primary"
+                              style={{ textDecoration: "none", whiteSpace: "nowrap" }}
+                              title="Agendar ou iniciar atendimento para este paciente"
+                            >
+                              + Atender
+                            </Link>
+                          )}
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              className="ds-btn ds-btn-sm ds-btn-secondary"
+                              style={{ color: "var(--danger)" }}
+                              onClick={() => handleExcluir(p.id, p.nome)}
+                              title="Remover cadastro do paciente"
+                            >
+                              Remover
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
