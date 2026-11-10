@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { api } from "../../services/api";
 import "./Home.css";
 
 const modules = [
@@ -21,6 +23,21 @@ const modules = [
 ];
 
 function Home() {
+  const navigate = useNavigate();
+  const [usuario, setUsuario] = useState(null);
+
+  useEffect(() => {
+    setUsuario(api.obterSessao());
+  }, []);
+
+  const handleLogout = () => {
+    api.encerrarSessao();
+    setUsuario(null);
+  };
+
+  const isAdmin = usuario?.cargo === "Administrador";
+  const isMedico = usuario?.cargo === "Médico Clínico";
+
   return (
     <div className="home-container">
       <header className="home-header">
@@ -38,8 +55,26 @@ function Home() {
 
         <nav className="home-nav" aria-label="Navegação principal">
           <a href="#recursos" className="nav-link">Recursos</a>
-          <Link to="/login" className="btn-outline">Entrar</Link>
-          <Link to="/cadastro" className="btn-primary">Criar conta</Link>
+          {usuario ? (
+            <>
+              <Link to="/dashboard" className="btn-primary">
+                {isAdmin ? "Painel de Gestão" : isMedico ? "Meu Painel Clínico" : "Acessar Painel"}
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="btn-outline"
+                style={{ cursor: "pointer", background: "transparent" }}
+              >
+                Sair
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="btn-outline">Entrar</Link>
+              <Link to="/cadastro" className="btn-primary">Criar conta</Link>
+            </>
+          )}
         </nav>
       </header>
 
@@ -53,8 +88,8 @@ function Home() {
               simples de acompanhar e usar no dia a dia.
             </p>
             <div className="hero-actions">
-              <Link to="/login" className="btn-primary hero-btn">
-                Acessar sistema
+              <Link to={usuario ? "/dashboard" : "/login"} className="btn-primary hero-btn">
+                {usuario ? "Acessar sistema" : "Acessar sistema"}
               </Link>
               <a href="#recursos" className="btn-secondary hero-btn">
                 Conhecer recursos
@@ -101,21 +136,10 @@ function Home() {
             ))}
           </div>
         </section>
-
-        <section className="cta-section">
-          <div>
-            <p className="section-eyebrow">Sistema de Gestão Hospitalar</p>
-            <h2>Comece pela rotina da sua equipe.</h2>
-          </div>
-          <Link to="/login" className="btn-primary">
-            Entrar no sistema
-          </Link>
-        </section>
       </main>
 
       <footer className="home-footer">
-        <span>Hospital · Sistema de Gestão</span>
-        <span>Gestão clara para o cuidado diário.</span>
+        <p>Sistema Hospitalar Integrado &bull; Atendimento, Leitos e Prontuários</p>
       </footer>
     </div>
   );
