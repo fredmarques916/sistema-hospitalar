@@ -514,6 +514,7 @@ function Consultas() {
               <option value="EM_ATENDIMENTO">Em Atendimento</option>
               <option value="CONCLUIDA">Concluída</option>
               <option value="CANCELADA">Cancelada</option>
+              <option value="NAO_COMPARECEU">Não compareceu</option>
             </select>
           </div>
         </div>
@@ -611,14 +612,23 @@ function Consultas() {
                               </button>
                             )}
                             {(c.situacao === "AGENDADA" || c.situacao === "CONFIRMADA") && (
-                              <button
-                                className="ds-btn ds-btn-sm"
-                                style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" }}
-                                onClick={() => handleAcaoRapida(c.id, "EM_ATENDIMENTO")}
-                                title="Iniciar consulta agora"
-                              >
-                                Iniciar
-                              </button>
+                              <>
+                                <button
+                                  className="ds-btn ds-btn-sm"
+                                  style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" }}
+                                  onClick={() => handleAcaoRapida(c.id, "EM_ATENDIMENTO")}
+                                  title="Iniciar consulta agora"
+                                >
+                                  Iniciar
+                                </button>
+                                <button
+                                  className="ds-btn ds-btn-sm ds-btn-secondary"
+                                  onClick={() => handleAcaoRapida(c.id, "NAO_COMPARECEU")}
+                                  title="Registrar que o paciente não compareceu"
+                                >
+                                  Falta
+                                </button>
+                              </>
                             )}
                             {c.situacao === "EM_ATENDIMENTO" && (
                               <button
@@ -630,7 +640,7 @@ function Consultas() {
                                 Concluir
                               </button>
                             )}
-                            {c.situacao !== "CONCLUIDA" && c.situacao !== "CANCELADA" && (
+                            {c.situacao !== "CONCLUIDA" && c.situacao !== "CANCELADA" && c.situacao !== "NAO_COMPARECEU" && (
                               <button
                                 className="ds-btn ds-btn-sm ds-btn-secondary"
                                 style={{ color: "var(--danger)" }}
